@@ -1,0 +1,7 @@
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\obj\x86\Debug\Text2Tree.Form1.resources
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\obj\x86\Debug\Text2Tree.Properties.Resources.resources
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\obj\x86\Debug\01Text2Tree.csproj.GenerateResource.Cache
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\bin\Debug\01Text2Tree.exe
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\bin\Debug\01Text2Tree.pdb
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\obj\x86\Debug\01Text2Tree.exe
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\obj\x86\Debug\01Text2Tree.pdb

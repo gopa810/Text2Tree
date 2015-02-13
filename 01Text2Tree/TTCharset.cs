@@ -17,7 +17,24 @@ namespace Text2Tree
         private Dictionary<int, bool[]> pages = new Dictionary<int,bool[]>();
         private int lastPageId = -1;
         private bool[] lastPage = null;
+
+        /// <summary>
+        /// This Inverted property enables to use inverse charset definition.
+        /// If Inverse = false, then we have to enumerate explicitly all characters
+        ///  that are part of charet.
+        /// If Inverse = true, then by default all characters are part of given
+        ///  charset, and we have to explicitly state which characters are excluded.
+        /// </summary>
         public bool Inverted = false;
+
+        public TTCharset()
+        {
+        }
+
+        public TTCharset(bool bInverse)
+        {
+            Inverted = bInverse;
+        }
 
         private bool[] getPage(int page)
         {
@@ -103,7 +120,7 @@ namespace Text2Tree
             int i = Convert.ToInt32(c);
             bool[] b = getPage(i / PAGE_SIZE);
             if (b == null)
-                return false;
+                return Inverted;
             return b[i % PAGE_SIZE] ? !Inverted : Inverted;
         }
     }

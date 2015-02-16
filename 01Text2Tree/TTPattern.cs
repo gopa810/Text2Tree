@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
 namespace Text2Tree
 {
@@ -18,10 +19,16 @@ namespace Text2Tree
             /// This may be char, TTCharset or TTPattern
             /// </summary>
             public object EntryObject = null;
+
+            public override string ToString()
+            {
+                return string.Format("{0}:{1}:{2}", Min, Current, Max);
+            }
         }
 
         public string Name = string.Empty;
         protected List<TTPatternEntry> Lines = new List<TTPatternEntry>();
+        public bool patternParallel = false;
 
         public TTPattern()
         {
@@ -29,10 +36,23 @@ namespace Text2Tree
 
         public TTPattern(string str)
         {
-            foreach (char c in str)
-            {
-                addChar(1, 1, c);
-            }
+            Name = str;
+        }
+
+        public bool IsParallel
+        {
+            get { return patternParallel; }
+            set { patternParallel = value; }
+        }
+
+        public void addString(int min, int max, string str)
+        {
+            TTPatternEntry pe = new TTPatternEntry();
+            pe.Min = min;
+            pe.Max = max;
+            pe.EntryObject = str;
+
+            Lines.Add(pe);
         }
 
         public void addChar(int min, int max, char c)
@@ -74,75 +94,91 @@ namespace Text2Tree
 
         public TTTreeNode Parse(TTInputTextFile input)
         {
-            TextPosition orig = input.current;
-            TextPosition linePos;
-            int index = 0;
-            int maxIndex = Lines.Count - 1;
+            TextPosition orig = input.next;
+            bool b;
 
-            clearFinalizedData(-1, maxIndex);
-
-            while (index <= maxIndex)
+            if (patternParallel)
             {
-                TTPatternEntry pe = Lines[index];
-                linePos = input.current;
+                b = ParseParallel(input, orig);
+            }
+            else
+            {
+                b = ParseSerial(input, orig);
+            }
+
+            if (b)
+            {
+                TTTreeNode tn = new TTTreeNode();
+                tn.Type = Name;
+                tn.startPos = orig;
+                tn.endPos = input.next;
+                tn.Value = input.stringFromRange(orig.position, input.next.position - 1); /*  value from input file, needs to be extracted according parsed range */
+                return tn;
+            }
+
+            return null;
+        }
+
+        private bool ParseParallel(TTInputTextFile input, TextPosition orig)
+        {
+            TextPosition maxPos = orig;
+            TTPatternEntry maxLine = null;
+
+            foreach (TTPatternEntry pe in Lines)
+            {
+                input.next = orig;
                 if (ParseLine(pe, input))
                 {
-                    pe.Current++;
-                    if (pe.Current >= pe.Min)
+                    if (maxPos.position < input.next.position)
                     {
-                        if (pe.Current >= pe.Max)
-                            pe.Final = true;
-                        index++;
-                    }
-                }
-                else
-                {
-                    // parsing was not successsful
-                    // but if we found what we needed, then go to next line
-                    // otherwise go back to last not finalized line
-                    // and try iterate from there
-                    if (pe.Current >= pe.Min && pe.Current <= pe.Max)
-                    {
-                        // ok, this line is finalized
-                        // go to next line
-                        pe.Final = true;
-                        index++;
-                    }
-                    else
-                    {
-                        // find last not finalized line
-                        index = findPreviousUnfinishedLine(index);
-
-                        // if found, clear line data after that line
-                        // and try to run again parserline for this line
-                        // if not found, then we must admit that all parts were finalized
-                        // and still we did not satisfied whole pattern
-                        // so parsing this pattern is not successful
-                        if (index >= 0)
-                        {
-                            // clear finalized flag and number of found occurences
-                            // in all remainig lines
-                            clearFinalizedData(index, maxIndex);
-
-                            // restore position in input for parser at line "index"
-                            input.current = linePos;
-                        }
-                        else
-                        {
-                            // go back to position in input file
-                            // as it was before parsing this pattern
-                            input.current = orig;
-                            return null;
-                        }
+                        maxPos = input.next;
+                        maxLine = pe;
                     }
                 }
             }
 
-            TTTreeNode tn = new TTTreeNode();
-            tn.Type = Name;
-            tn.Value = ""; /*  value from input file, needs to be extracted according parsed range */
+            if (maxLine != null && maxPos.position > orig.position)
+            {
+                input.next = maxPos;
+                return true;
+            }
 
-            /* return tn; */
+            return false;
+        }
+
+        private bool ParseSerial(TTInputTextFile input, TextPosition orig)
+        {
+            TextPosition linePos;
+            int index = 0;
+            int maxIndex = Lines.Count - 1;
+
+            foreach (TTPatternEntry pe in Lines)
+            {
+                pe.Current = 0;
+                while (pe.Current < pe.Max)
+                {
+                    linePos = input.next;
+                    bool b = ParseLine(pe, input);
+                    if (b)
+                    {
+                        pe.Current++;
+                    }
+                    else
+                    {
+                        input.next = linePos;
+                        break;
+                    }
+                }
+                if (pe.Current < pe.Min)
+                {
+                    input.next = orig;
+                    return false;
+                }
+                index++;
+            }
+
+            return true;
+
         }
 
         private void clearFinalizedData(int index, int maxIndex)
@@ -168,9 +204,57 @@ namespace Text2Tree
             return found;
         }
 
-        public bool ParseLine(TTPatternEntry pe, TTInputTextFile input)
+        private bool ParseLine(TTPatternEntry pe, TTInputTextFile input)
         {
-            return true;
+            if (pe.EntryObject is char)
+            {
+                CharEntry ce = input.getChar();
+                if (ce.eof)
+                    return false;
+                char c = (char)pe.EntryObject;
+                Debugger.Log(0, "", "  ParseLine char " + c + "\n");
+                return (c == ce.c);
+            }
+            else if (pe.EntryObject is string)
+            {
+                int i = 0;
+                string s = pe.EntryObject as string;
+                Debugger.Log(0, "", "  ParseLine string " + s + "\n");
+                CharEntry ce = input.getChar();
+                while (i < s.Length)
+                {
+                    if (ce.eof)
+                        return false;
+                    if (ce.c != s[i])
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        i++;
+                        ce = input.getChar();
+                    }
+                }
+                return true;
+            }
+            else if (pe.EntryObject is TTCharset)
+            {
+                TTCharset cset = pe.EntryObject as TTCharset;
+                Debugger.Log(0, "", "  ParseLine charset \"" + cset.Name + "\"\n");
+                CharEntry ce = input.getChar();
+                if (ce.eof)
+                    return false;
+                return (cset.ContainsChar(ce.c));
+            }
+            else if (pe.EntryObject is TTPattern)
+            {
+                TTPattern pat = pe.EntryObject as TTPattern;
+                Debugger.Log(0, "", "  ParseLine pattern \"" + pat.Name + "\" \n");
+                TTTreeNode tn = pat.Parse(input);
+                return (tn != null);
+            }
+
+            return false;
         }
     }
 }

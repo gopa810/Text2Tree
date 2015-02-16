@@ -113,14 +113,24 @@ namespace Text2Tree
 
         public bool Run(TTInputTextFile input, TTTreeNode tree)
         {
-            TextPosition pos = input.current;
+            TextPosition pos = input.next;
 
             foreach (TTParserEntry pe in Lines)
             {
                 if (!ParseLine(pe, input, tree))
                 {
-                    input.current = pos;
+                    input.next = pos;
                     return false;
+                }
+            }
+
+            for (int i = 0; i < tree.Subnodes.Count; i++)
+            {
+                if (tree.Subnodes[i].Type.Length == 0)
+                {
+                    tree.Subnodes.InsertRange(i + 1, tree.Subnodes[i].Subnodes);
+                    tree.Subnodes.RemoveAt(i);
+                    i--;
                 }
             }
 
@@ -130,7 +140,7 @@ namespace Text2Tree
         public bool ParseLine(TTParserEntry entry, TTInputTextFile input, TTTreeNode result)
         {
             TTTreeNode work = null;
-            TextPosition last = input.current;
+            TextPosition last = input.next;
             //
             // MAXIMUM
             //
@@ -140,7 +150,7 @@ namespace Text2Tree
                 {
                     TextPosition max = new TextPosition();
                     // current position is maximum till now :)
-                    max = input.current;
+                    max = input.next;
                     TTTreeNode maxRes = null;
                     bool succ = false;
 
@@ -149,23 +159,22 @@ namespace Text2Tree
                     foreach (object c in entry.args)
                     {
                         work = ParseObject(c, input);
-                        if (work != null && work.endPos.position >= max.position)
+                        if (work != null && work.endPos.position > max.position)
                         {
                             maxRes = work;
-                            max = input.current;
+                            max = input.next;
                         }
 
                         // return to original position
                         // after each parsing
-                        input.current = last;
+                        input.next = last;
                     }
 
                     if (maxRes != null)
                     {
                         succ = true;
                         result.Subnodes.Add(maxRes);
-                        input.current = max;
-                        input.moveOneChar();
+                        input.next = max;
                     }
 
                     return succ;
@@ -185,7 +194,7 @@ namespace Text2Tree
                             succ = true;
                             break;
                         }
-                        input.current = last;
+                        input.next = last;
                     }
 
                     return succ;
@@ -198,7 +207,7 @@ namespace Text2Tree
                     bool succ = true;
                     while (succ)
                     {
-                        last = input.current;
+                        last = input.next;
                         work = ParseObject(entry.args[0], input);
                         if (work != null)
                         {
@@ -206,7 +215,7 @@ namespace Text2Tree
                         }
                         else
                         {
-                            input.current = last;
+                            input.next = last;
                             succ = false;
                         }
                     }
@@ -218,11 +227,11 @@ namespace Text2Tree
             {
                 if (entry.args != null && entry.args.Length > 0)
                 {
-                    last = input.current;
+                    last = input.next;
                     work = ParseObject(entry.args[0], input);
                     if (work != null)
                     {
-                        input.current = last;
+                        input.next = last;
                         return false;
                     }
                     else
@@ -275,6 +284,9 @@ namespace Text2Tree
             }
             else if (c is TTPattern)
             {
+                TTPattern pat = (c as TTPattern);
+                TTTreeNode tn = pat.Parse(input);
+                return tn;
             }
             else if (c is TTParser)
             {

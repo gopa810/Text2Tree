@@ -31,6 +31,11 @@ namespace Text2Tree
         {
         }
 
+        public TTCharset(string sName)
+        {
+            Name = sName;
+        }
+
         public TTCharset(bool bInverse)
         {
             Inverted = bInverse;

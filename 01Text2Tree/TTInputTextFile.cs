@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
 namespace Text2Tree
 {
@@ -23,7 +24,6 @@ namespace Text2Tree
     public struct CharEntry
     {
         public bool eof;
-        public bool cValid;
         public char c;
         public TextPosition pos;
 
@@ -31,8 +31,12 @@ namespace Text2Tree
         {
             eof = b;
             c = '\0';
-            cValid = false;
             pos = new TextPosition();
+        }
+
+        public override string ToString()
+        {
+            return String.Format("Char:{0}  EOF:{1}", c, eof);
         }
     }
 
@@ -49,34 +53,33 @@ namespace Text2Tree
         private int contentType = CT_NULL;
         private string contentString = String.Empty;
 
-        private CharEntry currentChar;
+        private CharEntry lastChar;
+        private TextPosition nextPos;
 
-        public TextPosition current
+        public TextPosition next
         {
             get
             {
-                return currentChar.pos;
+                return nextPos;
             }
             set
             {
-                currentChar.pos = value;
+                nextPos = value;
                 validateEof();
-                currentChar.cValid = false;
             }
         }
 
         public void reset()
         {
-            currentChar.pos.position = 0;
-            currentChar.pos.lineNo = 0;
-            currentChar.pos.linePos = 0;
-            currentChar.eof = false;
-            currentChar.cValid = false;
+            lastChar.pos.position = 0;
+            lastChar.pos.lineNo = 0;
+            lastChar.pos.linePos = 0;
+            lastChar.eof = false;
         }
 
         public bool canRead()
         {
-            return !currentChar.eof;
+            return !lastChar.eof;
         }
 
         /// <summary>
@@ -95,7 +98,7 @@ namespace Text2Tree
         {
             if (contentType == CT_STRING)
             {
-                currentChar.eof = (contentString.Length <= current.position);
+                lastChar.eof = (contentString.Length <= nextPos.position);
             }
         }
 
@@ -106,44 +109,30 @@ namespace Text2Tree
         /// <returns></returns>
         public CharEntry getChar()
         {
-            if (currentChar.eof)
+            validateEof();
+            if (lastChar.eof)
             {
-                return currentChar;
+                Debugger.Log(0, "", "getChar EOF\n");
+                return lastChar;
             }
             if (contentType == CT_STRING)
             {
                 // if character is not valid, then read current position
                 // if character is valid, then first move to next position
                 // then read character (if possible)
-                if (currentChar.cValid == false)
+                lastChar.c = contentString[nextPos.position];
+                lastChar.pos = nextPos;
+                nextPos.position++;
+                nextPos.linePos++;
+                if (lastChar.c == '\x0a' || lastChar.c == '\x0d')
                 {
-                    currentChar.c = contentString[current.position];
-                    currentChar.cValid = true;
-                }
-                else
-                {
-                    // moving positions
-                    moveOneChar();
+                    nextPos.lineNo++;
+                    nextPos.linePos = 0;
                 }
             }
 
-            return currentChar;
-        }
-
-        public void moveOneChar()
-        {
-            currentChar.pos.position++;
-            currentChar.pos.linePos++;
-            if (currentChar.c == '\x0a' || currentChar.c == '\x0d')
-            {
-                currentChar.pos.lineNo++;
-                currentChar.pos.linePos = 0;
-            }
-            validateEof();
-            if (!currentChar.eof)
-            {
-                currentChar.c = contentString[current.position];
-            }
+            Debugger.Log(0, "", "getChar [" + (lastChar.pos.position) + "] " + lastChar.c + "\n");
+            return lastChar;
         }
 
         private List<TextPositionObject> stateStack = new List<TextPositionObject>(); 
@@ -152,7 +141,7 @@ namespace Text2Tree
         {
             if (stateStack.Count > 0)
             {
-                current = stateStack[stateStack.Count - 1].pos;
+                next = stateStack[stateStack.Count - 1].pos;
                 stateStack.RemoveAt(stateStack.Count - 1);
             }
         }
@@ -160,7 +149,7 @@ namespace Text2Tree
         public void pushState()
         {
             TextPositionObject tpo = new TextPositionObject();
-            tpo.pos = current;
+            tpo.pos = next;
             stateStack.Add(tpo);
         }
 
@@ -168,8 +157,18 @@ namespace Text2Tree
         {
             if (stateStack.Count > 0)
             {
-                current = stateStack[stateStack.Count - 1].pos;
+                next = stateStack[stateStack.Count - 1].pos;
             }
+        }
+
+        public string stringFromRange(int pStart, int pEnd)
+        {
+            if (contentType == CT_STRING)
+            {
+                return contentString.Substring(pStart, pEnd - pStart + 1);
+            }
+
+            return String.Empty;
         }
     }
 }

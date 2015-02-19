@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 
-namespace Text2Tree
+namespace TextTreeParser
 {
     public class TTPattern
     {
@@ -67,7 +67,7 @@ namespace Text2Tree
 
         public void addChars(int min, int max, string str)
         {
-            TTCharset cs = new TTCharset();
+            TTCharset cs = new TTCharset("_charset_" + str);
             cs.addChars(str);
 
             addCharset(min, max, cs);
@@ -129,6 +129,13 @@ namespace Text2Tree
                 input.next = orig;
                 if (ParseLine(pe, input))
                 {
+                    // this is like negation
+                    // if this line was hit, then stop using this parser
+                    if (pe.Max < 0)
+                    {
+                        input.next = orig;
+                        return false;
+                    }
                     if (maxPos.position < input.next.position)
                     {
                         maxPos = input.next;
@@ -220,9 +227,10 @@ namespace Text2Tree
                 int i = 0;
                 string s = pe.EntryObject as string;
                 Debugger.Log(0, "", "  ParseLine string " + s + "\n");
-                CharEntry ce = input.getChar();
+                CharEntry ce;
                 while (i < s.Length)
                 {
+                    ce = input.getChar();
                     if (ce.eof)
                         return false;
                     if (ce.c != s[i])
@@ -232,7 +240,6 @@ namespace Text2Tree
                     else
                     {
                         i++;
-                        ce = input.getChar();
                     }
                 }
                 return true;

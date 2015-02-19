@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 
-namespace Text2Tree
+namespace TextTreeParser
 {
     /// <summary>
     /// Defines mutable charset with possibility to add characters into definition of charset.

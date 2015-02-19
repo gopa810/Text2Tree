@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using TextTreeParser;
 
 namespace Text2Tree
 {
@@ -52,9 +53,11 @@ namespace Text2Tree
                     print("  ");
                 println("TreeNode [", pr.Type, "] = ", pr.Value);
             }
-            foreach (TTTreeNode cn in pr.Subnodes)
+            TTTreeNode cn = pr.firstChild;
+            while (cn != null)
             {
                 print(cn, level + 1);
+                cn = cn.nextSibling;
             }
         }
 
@@ -100,10 +103,13 @@ namespace Text2Tree
             //print(res);
             //res = par.ParseObject("ef", ip);
             //print(res);
-            foreach(TTTreeNode res2 in tn.Subnodes)
+            TTTreeNode res2 = tn.firstChild;
+            while (res2 != null)
             {
                 print(res2);
+                res2 = res2.nextSibling;
             }
+
             stopFuncLog();
         }
 
@@ -112,80 +118,18 @@ namespace Text2Tree
             startFuncLog("Parser");
 
             TTInputTextFile ip = new TTInputTextFile();
-            ip.setContentString("-10.289829F  parpar");
+            ip.setContentString("VAR CHARSET newline ; \r\n [newline addchars 'abcdef' [charset default]];\r\n-10.289829F  /*parpar 1.67E67*/ \r\n-.278E+0718 \"string\\\" here\" // commnet\n here ");
 
-            TTCharset csAlpha = new TTCharset("alpha");
-            csAlpha.addRange('a', 'z');
-            csAlpha.addRange('A', 'Z');
+            TTScript script = new TTScript();
 
-            TTCharset csDigit = new TTCharset("digit");
-            csDigit.addRange('0', '9');
+            script.Initialize();
 
-            TTCharset csNewlineSpaces = new TTCharset("whitespaceNewline");
-            csNewlineSpaces.addChars(" \t\n\r");
-
-            TTCharset csWhitespace = new TTCharset("whitespace");
-            csWhitespace.addChars(" \t");
-
-            TTCharset csNewline = new TTCharset("newline");
-            csNewline.addChars("\r\n");
-
-            TTCharset csIdent1 = new TTCharset("ident1");
-            csIdent1.addRange('a', 'z');
-            csIdent1.addRange('A', 'Z');
-            csIdent1.addChars('_');
-
-            TTCharset csIdent2 = new TTCharset("ident2");
-            csIdent2.addRange('a', 'z');
-            csIdent2.addRange('A', 'Z');
-            csIdent2.addRange('0', '9');
-            csIdent2.addChars('_');
-
-            /*TTParser par = new TTParser();
-            //ParserResult res = null;
-
-            par.Max("ab", tcs, "abcud", "abs");
-            par.First("ea", tcs2, tcs3, "ef");
-            TTTreeNode tn = new TTTreeNode();
-            if (par.Run(ip, tn))
+            if (script.Run(ip))
             {
-                //res = par.ParseObject("abcd", ip);
-                //print(res);
-                //res = par.ParseObject("ef", ip);
-                //print(res);
-                foreach (TTTreeNode res2 in tn.Subnodes)
-                {
-                    print(res2);
-                }
-            }*/
-
-
-            TTPattern pFloat = new TTPattern("float");
-            pFloat.addChars(0, 1, "+-");
-            pFloat.addCharset(0, 1000, csDigit);
-            pFloat.addChar(1, 1, '.');
-            pFloat.addCharset(0, 1000, csDigit);
-            pFloat.addChars(0, 1, "fF");
-
-            TTPattern pIdent = new TTPattern("identifier");
-            pIdent.addCharset(1, 1, csIdent1);
-            pIdent.addCharset(0, 1000, csIdent2);
-
-            TTPattern pWs = new TTPattern("ws");
-            pWs.addCharset(1, 1000000, csNewlineSpaces);
-
-
-            TTParser par = new TTParser();
-            par.Max(pFloat, pIdent, pWs);
-
-            TTParser par2 = new TTParser();
-            par2.List(par);
-
-            TTTreeNode tn = new TTTreeNode();
-            if (par2.Run(ip, tn))
-            {
-                print(tn);
+                print(script.resultTree);
             }
+
+            println(script.errorLog.ToString());
             stopFuncLog();
         }
         public void testInputTextFile()

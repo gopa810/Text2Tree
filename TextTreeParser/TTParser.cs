@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Text2Tree
+namespace TextTreeParser
 {
     public class ParserResult
     {
@@ -68,6 +68,7 @@ namespace Text2Tree
         public static readonly int TTP_TRY = 3;
         public static readonly int TTP_FIRST = 4;
         public static readonly int TTP_OBJECT = 5;
+        public TTErrorLog errors = null;
 
         public class TTParserEntry
         {
@@ -79,6 +80,26 @@ namespace Text2Tree
                 type = t;
                 args = a;
             }
+        }
+
+        public TTParser()
+        {
+        }
+
+        public TTParser(string name)
+        {
+            Name = name;
+        }
+
+        public TTParser(TTErrorLog err)
+        {
+            errors = err;
+        }
+
+        public TTParser(string name, TTErrorLog err)
+        {
+            Name = name;
+            errors = err;
         }
 
         public string Name = string.Empty;
@@ -111,10 +132,21 @@ namespace Text2Tree
             Lines.Add(new TTParserEntry(TTP_OBJECT, new object[] { pat }));
         }
 
+        /// <summary>
+        /// Parses input text file and fills tree object
+        /// </summary>
+        /// <param name="input">Input text file</param>
+        /// <param name="tree">Output tree object</param>
+        /// <returns></returns>
         public bool Run(TTInputTextFile input, TTTreeNode tree)
         {
             TextPosition pos = input.next;
 
+            // go through all lines
+            // and expect success
+            // if any line fails, return position in input text file
+            // to original position before using this parser
+            // and return false
             foreach (TTParserEntry pe in Lines)
             {
                 if (!ParseLine(pe, input, tree))
@@ -124,19 +156,20 @@ namespace Text2Tree
                 }
             }
 
-            for (int i = 0; i < tree.Subnodes.Count; i++)
-            {
-                if (tree.Subnodes[i].Type.Length == 0)
-                {
-                    tree.Subnodes.InsertRange(i + 1, tree.Subnodes[i].Subnodes);
-                    tree.Subnodes.RemoveAt(i);
-                    i--;
-                }
-            }
-
+            // if nothing else (no failure during parsing)
+            // return success
             return true;
         }
 
+        /// <summary>
+        /// Parsing line from parser list.
+        /// When parsing of line is successful, then returns true
+        /// if parsing failed, returns false
+        /// </summary>
+        /// <param name="entry">Line from parser's list</param>
+        /// <param name="input">Input text file</param>
+        /// <param name="result">Output tree node</param>
+        /// <returns></returns>
         public bool ParseLine(TTParserEntry entry, TTInputTextFile input, TTTreeNode result)
         {
             TTTreeNode work = null;
@@ -159,7 +192,7 @@ namespace Text2Tree
                     foreach (object c in entry.args)
                     {
                         work = ParseObject(c, input);
-                        if (work != null && work.endPos.position > max.position)
+                        if (work != null && input.next.position > max.position)
                         {
                             maxRes = work;
                             max = input.next;
@@ -173,8 +206,16 @@ namespace Text2Tree
                     if (maxRes != null)
                     {
                         succ = true;
-                        result.Subnodes.Add(maxRes);
+                        result.addSubnode(maxRes);
                         input.next = max;
+                    }
+                    else
+                    {
+                        input.next = last;
+                        if (errors != null)
+                        {
+                            errors.addLog("Unable to use any of parsers at line {0}, position {1}", last.lineNo, last.linePos);
+                        }
                     }
 
                     return succ;
@@ -188,9 +229,9 @@ namespace Text2Tree
                     foreach (object c in entry.args)
                     {
                         work = ParseObject(c, input);
-                        if (work != null)
+                        if (work != null && input.next.position > last.position)
                         {
-                            result.Subnodes.Add(work);
+                            result.addSubnode(work);
                             succ = true;
                             break;
                         }
@@ -211,7 +252,7 @@ namespace Text2Tree
                         work = ParseObject(entry.args[0], input);
                         if (work != null)
                         {
-                            result.Subnodes.Add(work);
+                            result.addSubnode(work);
                         }
                         else
                         {
@@ -236,7 +277,7 @@ namespace Text2Tree
                     }
                     else
                     {
-                        result.Subnodes.Add(work);
+                        result.addSubnode(work);
                         return true;
                     }
                 }
@@ -249,11 +290,12 @@ namespace Text2Tree
         {
             ParserResult result = new ParserResult();
             result.parser = c;
-
+            TextPosition last;
             if (c is string)
             {
                 string s = c as string;
                 int currPos = 0;
+                last = input.next;
                 while (currPos < s.Length)
                 {
                     char c1 = s[currPos];
@@ -265,6 +307,7 @@ namespace Text2Tree
                     }
                     else
                     {
+                        input.next = last;
                         return null;
                     }
                 }
@@ -275,11 +318,17 @@ namespace Text2Tree
                 TTCharset tcs = c as TTCharset;
                 while (true)
                 {
+                    last = input.next;
                     CharEntry c1 = input.getChar();
                     if (c1.eof == false && tcs.ContainsChar(c1.c))
+                    {
                         result.AddCharEntry(c1);
+                    }
                     else
+                    {
+                        input.next = last;
                         return result.getTreeNode();
+                    }
                 }
             }
             else if (c is TTPattern)

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 
-namespace Text2Tree
+namespace TextTreeParser
 {
     /// <summary>
     /// Position in the text maintains absolute posiion from the

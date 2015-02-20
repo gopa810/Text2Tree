@@ -42,6 +42,9 @@ namespace Text2Tree
         TTParser mainParserEntry;
         TTParser mainParser;
 
+        TTParser syntaxParser;
+
+        public TTAtomList atomList;
         public TTTreeNode resultTree;
         public TTErrorLog errorLog;
 
@@ -211,7 +214,7 @@ namespace Text2Tree
             patternPunctuation.addString(1, 1, ";");
             patternPunctuation.addString(1, 1, "#");
 
-            TTParser paNumber = new TTParser(errorLog);
+            TTParser paNumber = new TTParser();
             paNumber.Max(patternDoubleNumber, patternFloatNumber);
 
             // main parser line
@@ -225,42 +228,53 @@ namespace Text2Tree
             mainParser = new TTParser(errorLog);
             mainParser.List(mainParserEntry);
 
+            TTPattern pat3 = new TTPattern("func_arg");
+            TTPattern pat2 = new TTPattern("function_call");
+
+            pat3.IsParallel = true;
+            pat3.addAtom(1, 1, "string_lit_a", null);
+            pat3.addPattern(1, 1, pat2);
+
+            pat2.addAtom(1, 1, "brack", "[");
+            pat2.addAtom(1, 1, "id", null);
+            pat2.addAtom(1, 1, "id", null);
+            pat2.addPattern(0, 10000, pat3);
+            pat2.addAtom(1, 1, "brack", "]");
+
+            TTParser syntaxItem = new TTParser(errorLog);
+            syntaxItem.First(pat2);
+
+            syntaxParser = new TTParser(errorLog);
+            syntaxParser.List(syntaxItem);
+
         }
 
         public bool Run(TTInputTextFile ip)
         {
+            bool result = false;
+            atomList = new TTAtomList();
             resultTree = new TTTreeNode();
-            bool result = mainParser.Run(ip, resultTree);
 
-            if (result)
+            try
             {
-                // removing nodes with no type
-                // their subnodes becomes siblings
-                // and empty node is then removed
-                TTTreeNode removing = null;
-                TTTreeNode tn = resultTree.firstChild;
-                while(tn != null)
+
+                result = mainParser.ParseAtomList(ip, atomList);
+
+                if (result)
                 {
-                    if (tn.Type.Length == 0)
-                    {
-                        tn.insertNodesAfter(tn.firstChild);
-                        removing = tn;
-                        tn = tn.nextSibling;
-                        removing.removeSelf();
-                    }
-                    else
-                    {
-                        tn = tn.nextSibling;
-                    }
+                    atomList.removeAtomsWithType("ws");
+                    atomList.removeAtomsWithType("nl");
+
+                    syntaxParser.ParseTree(atomList, resultTree);
                 }
-
-                resultTree.removeSubnodesWithType("ws");
-
-                resultTree.makeSubranges("brack", "[", "brack", "]", "FUNCCALL");
-
+            }
+            catch (Exception x)
+            {
+                errorLog.addLog("{0}", x.Message);
             }
 
             return result;
         }
+
     }
 }

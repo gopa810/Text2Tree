@@ -39,6 +39,16 @@ namespace Text2Tree
             }
         }
 
+        public void print(TTAtomList pr)
+        {
+            TTAtom cn = pr.first;
+            while (cn != null)
+            {
+                println("  ATOM[", cn.Type, "] = ", cn.Value);
+                cn = cn.next;
+            }
+        }
+
         public void print(TTTreeNode pr, int level)
         {
             if (pr == null)
@@ -51,7 +61,14 @@ namespace Text2Tree
             {
                 for (int i = 0; i < level; i++)
                     print("  ");
-                println("TreeNode [", pr.Type, "] = ", pr.Value);
+                if (pr.atom != null)
+                {
+                    println("TreeNode [", pr.atom.Type, "] = ", pr.atom.Value);
+                }
+                else
+                {
+                    println("TreeNode NULL");
+                }
             }
             TTTreeNode cn = pr.firstChild;
             while (cn != null)
@@ -97,17 +114,17 @@ namespace Text2Tree
 
             par.Max("ab", "abc", "abcd", "abs");
             par.First("ea", "er", "e", "ef");
-            TTTreeNode tn = new TTTreeNode();
-            bool prs = par.Run(ip, tn);
+            TTAtomList tn = new TTAtomList();
+            par.ParseAtomList(ip, tn);
             //res = par.ParseObject("abcd", ip);
             //print(res);
             //res = par.ParseObject("ef", ip);
             //print(res);
-            TTTreeNode res2 = tn.firstChild;
+            TTAtom res2 = tn.first;
             while (res2 != null)
             {
                 print(res2);
-                res2 = res2.nextSibling;
+                res2 = res2.next;
             }
 
             stopFuncLog();
@@ -126,6 +143,9 @@ namespace Text2Tree
 
             if (script.Run(ip))
             {
+                println(" * * * ATOM LIST * * *");
+                print(script.atomList);
+                println(" * * * TREE * * *");
                 print(script.resultTree);
             }
 

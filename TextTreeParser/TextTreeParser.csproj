@@ -41,6 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TTAtom.cs" />
+    <Compile Include="TTAtomList.cs" />
     <Compile Include="TTCharset.cs" />
     <Compile Include="TTErrorLog.cs" />
     <Compile Include="TTInputTextFile.cs" />

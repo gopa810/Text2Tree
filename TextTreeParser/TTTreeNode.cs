@@ -7,24 +7,26 @@ namespace TextTreeParser
 {
     public class TTTreeNode
     {
+
+
         // attributes of tree node
-        public string Type;
-        public string Value;
-        public Dictionary<String, String> Attributes;
+        public TTAtom atom = null;
+        public string Name = string.Empty;
+
+        // 
         protected TTTreeNode firstSubnode = null;
         protected TTTreeNode lastSubnode = null;
         protected TTTreeNode nextNode = null;
         protected TTTreeNode parentNodeRef = null;
-        public TextPosition startPos;
-        public TextPosition endPos;
+
 
         // constructors
         public TTTreeNode()
         {
-            Type = String.Empty;
-            Value = String.Empty;
-            Attributes = new Dictionary<string,string>();
+            atom = null;
         }
+
+        #region Basic tree hierarchy methods
 
         public TTTreeNode firstChild
         {
@@ -48,21 +50,6 @@ namespace TextTreeParser
             {
                 return parentNodeRef;
             }
-        }
-
-        // methods
-        public void SetAttribute(string attrName, string attrVal)
-        {
-            if (Attributes.ContainsKey(attrName))
-                Attributes[attrName] = attrVal;
-            Attributes.Add(attrName, attrVal);
-        }
-
-        public string GetAttribute(string attrName)
-        {
-            if (Attributes.ContainsKey(attrName))
-                return Attributes[attrName];
-            return "";
         }
 
         public int getSubnodesCount()
@@ -148,13 +135,49 @@ namespace TextTreeParser
             }
         }
 
+        public void removeNode(TTTreeNode tn)
+        {
+            if (this.firstSubnode == tn)
+            {
+                if (this.lastSubnode == tn)
+                {
+                    this.firstSubnode = null;
+                    this.lastSubnode = null;
+                }
+                else
+                {
+                    this.firstSubnode = tn.nextNode;
+                }
+            }
+            else
+            {
+                TTTreeNode item = this.firstSubnode;
+                while (item != null)
+                {
+                    if (item.nextNode == tn)
+                    {
+                        item.nextNode = tn.nextNode;
+                        break;
+                    }
+                    item = item.nextNode;
+                }
+            }
+            tn.nextNode = null;
+            tn.parentNodeRef = null;
+        }
+
+
+        #endregion
+
+
+
         public void removeSubnodesWithType(string subType)
         {
             TTTreeNode removing;
-            TTTreeNode tn = this.firstSubnode;
+            TTTreeNode tn = this.firstChild;
             while (tn != null)
             {
-                if (tn.Type.Equals(subType))
+                if (tn.atom != null && tn.atom.Type.Equals(subType))
                 {
                     removing = tn;
                     tn = tn.nextSibling;
@@ -163,6 +186,26 @@ namespace TextTreeParser
                 else
                 {
                     tn.removeSubnodesWithType(subType);
+                    tn = tn.nextSibling;
+                }
+            }
+        }
+
+        public void flattenSubnodesWithType(string sType)
+        {
+            TTTreeNode removing = null;
+            TTTreeNode tn = this.firstChild;
+            while (tn != null)
+            {
+                if (tn.atom != null && tn.atom.Type.Equals(sType))
+                {
+                    tn.insertNodesAfter(tn.firstChild);
+                    removing = tn;
+                    tn = tn.nextSibling;
+                    removing.removeSelf();
+                }
+                else
+                {
                     tn = tn.nextSibling;
                 }
             }
@@ -177,14 +220,14 @@ namespace TextTreeParser
             {
                 tn.makeSubranges(subTypeStart, subValueStart, subTypeEnd, subValueEnd, name);
 
-                if ((subTypeStart == null || tn.Type.Equals(subTypeStart))
-                    && (subValueStart == null || tn.Value.Equals(subValueStart)))
+                if ((subTypeStart == null || (tn.atom != null && tn.atom.Type.Equals(subTypeStart)))
+                    && (subValueStart == null || (tn.atom != null && tn.atom.Value.Equals(subValueStart))))
                 {
                     stack.Add(tn);
                     tn = tn.nextNode;
                 }
-                else if ((subTypeEnd == null || tn.Type.Equals(subTypeEnd))
-                    && (subValueEnd == null || tn.Value.Equals(subValueEnd)))
+                else if ((subTypeEnd == null || (tn.atom != null && tn.atom.Type.Equals(subTypeEnd)))
+                    && (subValueEnd == null || (tn.atom != null && tn.atom.Value.Equals(subValueEnd))))
                 {
                     if (stack.Count > 0)
                     {
@@ -196,7 +239,7 @@ namespace TextTreeParser
                             if (t2 != null)
                                 t1.addSubnode(t2);
                             tn.removeSelf();
-                            t1.Type = name;
+                            t1.Name = name;
                             while (t2 != null)
                             {
                                 t2.parentNodeRef = t1;
@@ -239,35 +282,6 @@ namespace TextTreeParser
             return tret;
         }
 
-        public void removeNode(TTTreeNode tn)
-        {
-            if (this.firstSubnode == tn)
-            {
-                if (this.lastSubnode == tn)
-                {
-                    this.firstSubnode = null;
-                    this.lastSubnode = null;
-                }
-                else
-                {
-                    this.firstSubnode = tn.nextNode;
-                }
-            }
-            else
-            {
-                TTTreeNode item = this.firstSubnode;
-                while (item != null)
-                {
-                    if (item.nextNode == tn)
-                    {
-                        item.nextNode = tn.nextNode;
-                        break;
-                    }
-                    item = item.nextNode;
-                }
-            }
-            tn.nextNode = null;
-            tn.parentNodeRef = null;
-        }
+
     }
 }

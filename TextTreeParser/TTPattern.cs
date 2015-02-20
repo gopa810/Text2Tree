@@ -92,7 +92,7 @@ namespace TextTreeParser
         }
 
 
-        public TTTreeNode Parse(TTInputTextFile input)
+        public TTAtom ParseAtom(TTInputTextFile input)
         {
             TextPosition orig = input.next;
             bool b;
@@ -108,7 +108,7 @@ namespace TextTreeParser
 
             if (b)
             {
-                TTTreeNode tn = new TTTreeNode();
+                TTAtom tn = new TTAtom();
                 tn.Type = Name;
                 tn.startPos = orig;
                 tn.endPos = input.next;
@@ -119,6 +119,37 @@ namespace TextTreeParser
             return null;
         }
 
+        public TTTreeNode ParseTree(TTAtomList input)
+        {
+            TTAtom orig = input.current;
+            bool b;
+
+            if (patternParallel)
+            {
+                b = ParseParallel(input, orig);
+            }
+            else
+            {
+                b = ParseSerial(input, orig);
+            }
+
+            if (b)
+            {
+                TTTreeNode tn = new TTTreeNode();
+                tn.Name = Name;
+                TTAtom iter = orig;
+                while (iter != input.current)
+                {
+                    TTTreeNode ta = new TTTreeNode();
+                    tn.atom = iter;
+                    iter = iter.next;
+                    tn.addSubnode(ta);
+                }
+                return tn;
+            }
+
+            return null;
+        }
         private bool ParseParallel(TTInputTextFile input, TextPosition orig)
         {
             TextPosition maxPos = orig;
@@ -147,6 +178,40 @@ namespace TextTreeParser
             if (maxLine != null && maxPos.position > orig.position)
             {
                 input.next = maxPos;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool ParseParallel(TTAtomList input, TTAtom orig)
+        {
+            TTAtom maxPos = orig;
+            TTPatternEntry maxLine = null;
+
+            foreach (TTPatternEntry pe in Lines)
+            {
+                input.current = orig;
+                if (ParseLine(pe, input))
+                {
+                    // this is like negation
+                    // if this line was hit, then stop using this parser
+                    if (pe.Max < 0)
+                    {
+                        input.current = orig;
+                        return false;
+                    }
+                    if (maxPos.startPos.position < input.current.startPos.position)
+                    {
+                        maxPos = input.current;
+                        maxLine = pe;
+                    }
+                }
+            }
+
+            if (maxLine != null && maxPos.startPos.position > orig.startPos.position)
+            {
+                input.current = maxPos;
                 return true;
             }
 
@@ -187,6 +252,42 @@ namespace TextTreeParser
             return true;
 
         }
+
+        private bool ParseSerial(TTAtomList input, TTAtom orig)
+        {
+            TTAtom linePos;
+            int index = 0;
+            int maxIndex = Lines.Count - 1;
+
+            foreach (TTPatternEntry pe in Lines)
+            {
+                pe.Current = 0;
+                while (pe.Current < pe.Max)
+                {
+                    linePos = input.current;
+                    bool b = ParseLine(pe, input);
+                    if (b)
+                    {
+                        pe.Current++;
+                    }
+                    else
+                    {
+                        input.current = linePos;
+                        break;
+                    }
+                }
+                if (pe.Current < pe.Min)
+                {
+                    input.current = orig;
+                    return false;
+                }
+                index++;
+            }
+
+            return true;
+
+        }
+
 
         private void clearFinalizedData(int index, int maxIndex)
         {
@@ -257,11 +358,35 @@ namespace TextTreeParser
             {
                 TTPattern pat = pe.EntryObject as TTPattern;
                 Debugger.Log(0, "", "  ParseLine pattern \"" + pat.Name + "\" \n");
-                TTTreeNode tn = pat.Parse(input);
+                TTAtom tn = pat.ParseAtom(input);
                 return (tn != null);
             }
 
             return false;
+        }
+
+        private bool ParseLine(TTPatternEntry pe, TTAtomList input)
+        {
+            if (pe.EntryObject is TTParserAtom)
+            {
+                TTAtom ce = input.getAtom();
+                if (ce == null)
+                    return false;
+                TTParserAtom c = (TTParserAtom)pe.EntryObject;
+                return c.Match(ce);
+            }
+            return false;
+        }
+
+
+
+        public void addAtom(int min, int max, string t, string v)
+        {
+            TTPatternEntry pe = new TTPatternEntry();
+            pe.Min = min;
+            pe.Max = max;
+            pe.EntryObject = new TTParserAtom(t, v);
+            Lines.Add(pe);
         }
     }
 }

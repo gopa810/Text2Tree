@@ -34,9 +34,9 @@ namespace TextTreeParser
             return matchedString.ToString();
         }
 
-        public TTTreeNode getTreeNode()
+        public TTAtom getTreeNode()
         {
-            TTTreeNode tn = new TTTreeNode();
+            TTAtom tn = new TTAtom();
             tn.Type = getName();
             tn.Value = getValue();
             tn.startPos = startPos;
@@ -58,6 +58,45 @@ namespace TextTreeParser
                 endPos = ce.pos;
                 posStarted = true;
             }
+        }
+    }
+
+    public class TTParserAtom
+    {
+        public string TestType;
+        public string TestValue;
+
+        public TTParserAtom()
+        {
+            TestType = null;
+            TestValue = null;
+        }
+
+        public TTParserAtom(string s)
+        {
+            TestType = s;
+            TestValue = null;
+        }
+
+        public TTParserAtom(string s, string v)
+        {
+            TestType = s;
+            TestValue = v;
+        }
+
+        public bool Match(TTAtom ce)
+        {
+            if (TestType != null)
+            {
+                if (!TestType.Equals(ce.Type))
+                    return false;
+            }
+            if (TestValue != null)
+            {
+                if (!TestValue.Equals(ce.Value))
+                    return false;
+            }
+            return true;
         }
     }
 
@@ -138,7 +177,7 @@ namespace TextTreeParser
         /// <param name="input">Input text file</param>
         /// <param name="tree">Output tree object</param>
         /// <returns></returns>
-        public bool Run(TTInputTextFile input, TTTreeNode tree)
+        public bool ParseAtomList(TTInputTextFile input, TTAtomList tree)
         {
             TextPosition pos = input.next;
 
@@ -161,6 +200,29 @@ namespace TextTreeParser
             return true;
         }
 
+        public bool ParseTree(TTAtomList input, TTTreeNode tree)
+        {
+            TTAtom pos = input.current;
+
+            // go through all lines
+            // and expect success
+            // if any line fails, return position in input text file
+            // to original position before using this parser
+            // and return false
+            foreach (TTParserEntry pe in Lines)
+            {
+                if (!ParseLine(pe, input, tree))
+                {
+                    input.current = pos;
+                    return false;
+                }
+            }
+
+            // if nothing else (no failure during parsing)
+            // return success
+            return true;
+        }
+
         /// <summary>
         /// Parsing line from parser list.
         /// When parsing of line is successful, then returns true
@@ -170,9 +232,9 @@ namespace TextTreeParser
         /// <param name="input">Input text file</param>
         /// <param name="result">Output tree node</param>
         /// <returns></returns>
-        public bool ParseLine(TTParserEntry entry, TTInputTextFile input, TTTreeNode result)
+        public bool ParseLine(TTParserEntry entry, TTInputTextFile input, TTAtomList result)
         {
-            TTTreeNode work = null;
+            TTAtom work = null;
             TextPosition last = input.next;
             //
             // MAXIMUM
@@ -184,7 +246,7 @@ namespace TextTreeParser
                     TextPosition max = new TextPosition();
                     // current position is maximum till now :)
                     max = input.next;
-                    TTTreeNode maxRes = null;
+                    TTAtom maxRes = null;
                     bool succ = false;
 
                     // enumerate all parsers
@@ -206,7 +268,7 @@ namespace TextTreeParser
                     if (maxRes != null)
                     {
                         succ = true;
-                        result.addSubnode(maxRes);
+                        result.addItem(maxRes);
                         input.next = max;
                     }
                     else
@@ -214,7 +276,7 @@ namespace TextTreeParser
                         input.next = last;
                         if (errors != null)
                         {
-                            errors.addLog("Unable to use any of parsers at line {0}, position {1}", last.lineNo, last.linePos);
+                            throw new Exception(string.Format("SYNTAX: Unable to use any of parsers at line {0}, position {1}\n", last.lineNo, last.linePos));
                         }
                     }
 
@@ -231,7 +293,7 @@ namespace TextTreeParser
                         work = ParseObject(c, input);
                         if (work != null && input.next.position > last.position)
                         {
-                            result.addSubnode(work);
+                            result.addItem(work);
                             succ = true;
                             break;
                         }
@@ -252,7 +314,7 @@ namespace TextTreeParser
                         work = ParseObject(entry.args[0], input);
                         if (work != null)
                         {
-                            result.addSubnode(work);
+                            result.addItem(work);
                         }
                         else
                         {
@@ -277,6 +339,121 @@ namespace TextTreeParser
                     }
                     else
                     {
+                        result.addItem(work);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+
+        public bool ParseLine(TTParserEntry entry, TTAtomList input, TTTreeNode result)
+        {
+            TTTreeNode work = null;
+            TTAtom last = input.current;
+            //
+            // MAXIMUM
+            //
+            if (entry.type == TTP_MAX)
+            {
+                if (entry.args != null)
+                {
+                    TTAtom max = input.current;
+                    TTTreeNode maxRes = null;
+                    bool succ = false;
+
+                    // enumerate all parsers
+                    // and try to parse
+                    foreach (object c in entry.args)
+                    {
+                        work = ParseObject(c, input);
+                        if (work != null && input.current.endPos.position > max.endPos.position)
+                        {
+                            maxRes = work;
+                            max = input.current;
+                        }
+
+                        // return to original position
+                        // after each parsing
+                        input.current = last;
+                    }
+
+                    if (maxRes != null)
+                    {
+                        succ = true;
+                        result.addSubnode(maxRes);
+                        input.current = max;
+                    }
+                    else
+                    {
+                        input.current = last;
+                        if (errors != null)
+                        {
+                            throw new Exception(string.Format("SEMANTICS: Unable to use any of parsers at line {0}, position {1}\n", last.startPos.lineNo, last.startPos.linePos));
+                        }
+                    }
+
+                    return succ;
+                }
+            }
+            else if (entry.type == TTP_FIRST)
+            {
+                if (entry.args != null)
+                {
+                    bool succ = false;
+                    foreach (object c in entry.args)
+                    {
+                        work = ParseObject(c, input);
+                        if (work != null && input.current.endPos.position > last.endPos.position)
+                        {
+                            result.addSubnode(work);
+                            succ = true;
+                            break;
+                        }
+                        input.current = last;
+                    }
+
+                    return succ;
+                }
+            }
+            else if (entry.type == TTP_LIST)
+            {
+                if (entry.args != null && entry.args.Length > 0)
+                {
+                    bool succ = true;
+                    while (succ)
+                    {
+                        last = input.current;
+                        work = ParseObject(entry.args[0], input);
+                        if (work != null)
+                        {
+                            result.addSubnode(work);
+                        }
+                        else
+                        {
+                            input.current = last;
+                            succ = false;
+                        }
+                    }
+
+                    return true;
+                }
+            }
+            else if (entry.type == TTP_OBJECT)
+            {
+                if (entry.args != null && entry.args.Length > 0)
+                {
+                    last = input.current;
+                    work = ParseObject(entry.args[0], input);
+                    if (work != null)
+                    {
+                        input.current = last;
+                        return false;
+                    }
+                    else
+                    {
                         result.addSubnode(work);
                         return true;
                     }
@@ -286,7 +463,7 @@ namespace TextTreeParser
             return false;
         }
 
-        public TTTreeNode ParseObject(object c, TTInputTextFile input)
+        public TTAtom ParseObject(object c, TTInputTextFile input)
         {
             ParserResult result = new ParserResult();
             result.parser = c;
@@ -334,7 +511,48 @@ namespace TextTreeParser
             else if (c is TTPattern)
             {
                 TTPattern pat = (c as TTPattern);
-                TTTreeNode tn = pat.Parse(input);
+                TTAtom tn = pat.ParseAtom(input);
+                return tn;
+            }
+            else if (c is TTParser)
+            {
+                TTParser parser = c as TTParser;
+
+                TTAtomList tn = new TTAtomList();
+                if (parser.ParseAtomList(input, tn))
+                    return tn.first;
+                return null;
+            }
+
+            return null;
+        }
+
+        public TTTreeNode ParseObject(object c, TTAtomList input)
+        {
+            ParserResult result = new ParserResult();
+            result.parser = c;
+            TTAtom last;
+            if (c is TTParserAtom)
+            {
+                TTParserAtom s = c as TTParserAtom;
+                last = input.current;
+                TTAtom c2 = input.getAtom();
+                if (c2 != null && s.Match(c2))
+                {
+                    TTTreeNode tn = new TTTreeNode();
+                    tn.atom = c2;
+                    return tn;
+                }
+                else
+                {
+                    input.current = last;
+                    return null;
+                }
+            }
+            else if (c is TTPattern)
+            {
+                TTPattern pat = (c as TTPattern);
+                TTTreeNode tn = pat.ParseTree(input);
                 return tn;
             }
             else if (c is TTParser)
@@ -342,14 +560,15 @@ namespace TextTreeParser
                 TTParser parser = c as TTParser;
 
                 TTTreeNode tn = new TTTreeNode();
-                tn.Type = parser.Name;
-                tn.Value = "";
-                if (parser.Run(input, tn))
+                tn.Name = parser.Name;
+                if (parser.ParseTree(input, tn))
                     return tn;
                 return null;
             }
 
             return null;
         }
+
+    
     }
 }

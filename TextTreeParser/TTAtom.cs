@@ -46,5 +46,10 @@ namespace TextTreeParser
                 return Attributes[attrName];
             return "";
         }
+
+        public override string ToString()
+        {
+            return string.Format("{0}/{1}", (Type != null ? Type : ""), (Value != null ? Value : ""));
+        }
     }
 }

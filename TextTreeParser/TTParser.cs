@@ -61,11 +61,31 @@ namespace TextTreeParser
         }
     }
 
+    /// <summary>
+    /// Class for storing entity used for matching input list of atoms.
+    /// In first step of file processing we are reading text file and comparing it with patterns and strings
+    /// So matching objects are in that case patterns and strings
+    /// In second step we are processing list of atoms (created from original input file)
+    /// So matching object needs to store two values (TestType and TestValue) so we
+    /// can check actual values of atom in the list (Type and Value)
+    /// For this reason we have class TTParserAtom
+    /// </summary>
     public class TTParserAtom
     {
+        /// <summary>
+        /// Type of atom
+        /// </summary>
         public string TestType;
+
+        /// <summary>
+        /// Value of atom
+        /// </summary>
         public string TestValue;
 
+        /// <summary>
+        /// default are null values, that means given parameter 
+        /// is not used for matching in function Match
+        /// </summary>
         public TTParserAtom()
         {
             TestType = null;
@@ -84,6 +104,11 @@ namespace TextTreeParser
             TestValue = v;
         }
 
+        /// <summary>
+        /// Try to match ATOM received from input file, with this object.
+        /// </summary>
+        /// <param name="ce">Atom entry from input file</param>
+        /// <returns>Returns true if this object's type and/or value equals atom's values</returns>
         public bool Match(TTAtom ce)
         {
             if (TestType != null)
@@ -98,8 +123,25 @@ namespace TextTreeParser
             }
             return true;
         }
+
+        /// <summary>
+        /// For debugging we need dump of this object
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return string.Format("{0}/{1}", (TestType != null ? TestType : ""), (TestValue != null ? TestValue : ""));
+        }
     }
 
+    /// <summary>
+    /// Parser is needed for parsing input stream in customized or optimized way.
+    /// Functionaly does the same as TTPattern with the following differences:
+    /// - parser creates new tree node for each parsed subitem
+    ///   (pattern are just creating one)
+    /// - parser can use more parsing methods (Max, First, List)
+    ///   (pattern uses just Max and List
+    /// </summary>
     public class TTParser
     {
         public static readonly int TTP_MAX = 1;
@@ -107,7 +149,6 @@ namespace TextTreeParser
         public static readonly int TTP_TRY = 3;
         public static readonly int TTP_FIRST = 4;
         public static readonly int TTP_OBJECT = 5;
-        public TTErrorLog errors = null;
 
         public class TTParserEntry
         {
@@ -128,17 +169,6 @@ namespace TextTreeParser
         public TTParser(string name)
         {
             Name = name;
-        }
-
-        public TTParser(TTErrorLog err)
-        {
-            errors = err;
-        }
-
-        public TTParser(string name, TTErrorLog err)
-        {
-            Name = name;
-            errors = err;
         }
 
         public string Name = string.Empty;
@@ -204,6 +234,7 @@ namespace TextTreeParser
         {
             TTAtom pos = input.current;
 
+            TTErrorLog.Shared.enterDir("Parser " + Name, pos.startPos);
             // go through all lines
             // and expect success
             // if any line fails, return position in input text file
@@ -214,12 +245,14 @@ namespace TextTreeParser
                 if (!ParseLine(pe, input, tree))
                 {
                     input.current = pos;
+                    TTErrorLog.Shared.goUp();
                     return false;
                 }
             }
 
             // if nothing else (no failure during parsing)
             // return success
+            TTErrorLog.Shared.goUp();
             return true;
         }
 
@@ -243,6 +276,7 @@ namespace TextTreeParser
             {
                 if (entry.args != null)
                 {
+                    TTErrorLog.Shared.enterDir("Line MAX", last);
                     TextPosition max = new TextPosition();
                     // current position is maximum till now :)
                     max = input.next;
@@ -274,12 +308,10 @@ namespace TextTreeParser
                     else
                     {
                         input.next = last;
-                        if (errors != null)
-                        {
-                            throw new Exception(string.Format("SYNTAX: Unable to use any of parsers at line {0}, position {1}\n", last.lineNo, last.linePos));
-                        }
+                        //throw new Exception(string.Format("SYNTAX: Unable to use any of parsers at line {0}, position {1}\n", last.lineNo, last.linePos));
                     }
 
+                    TTErrorLog.Shared.goUp();
                     return succ;
                 }
             }
@@ -287,6 +319,7 @@ namespace TextTreeParser
             {
                 if (entry.args != null)
                 {
+                    TTErrorLog.Shared.enterDir("Line FIRST", last);
                     bool succ = false;
                     foreach (object c in entry.args)
                     {
@@ -300,6 +333,7 @@ namespace TextTreeParser
                         input.next = last;
                     }
 
+                    TTErrorLog.Shared.goUp();
                     return succ;
                 }
             }
@@ -307,6 +341,7 @@ namespace TextTreeParser
             {
                 if (entry.args != null && entry.args.Length > 0)
                 {
+                    TTErrorLog.Shared.enterDir("Line LIST", last);
                     bool succ = true;
                     while (succ)
                     {
@@ -323,6 +358,7 @@ namespace TextTreeParser
                         }
                     }
 
+                    TTErrorLog.Shared.goUp();
                     return true;
                 }
             }
@@ -330,8 +366,10 @@ namespace TextTreeParser
             {
                 if (entry.args != null && entry.args.Length > 0)
                 {
+                    TTErrorLog.Shared.enterDir("Line OBJECT", last);
                     last = input.next;
                     work = ParseObject(entry.args[0], input);
+                    TTErrorLog.Shared.goUp();
                     if (work != null)
                     {
                         input.next = last;
@@ -360,6 +398,7 @@ namespace TextTreeParser
             {
                 if (entry.args != null)
                 {
+                    TTErrorLog.Shared.enterDir("Line MAX", last.startPos);
                     TTAtom max = input.current;
                     TTTreeNode maxRes = null;
                     bool succ = false;
@@ -368,7 +407,15 @@ namespace TextTreeParser
                     // and try to parse
                     foreach (object c in entry.args)
                     {
-                        work = ParseObject(c, input);
+                        try
+                        {
+                            work = ParseObject(c, input);
+                        }
+                        catch(Exception ex)
+                        {
+                            TTErrorLog.Shared.addLog("{0}", ex.Message);
+                            work = null;
+                        }
                         if (work != null && input.current.endPos.position > max.endPos.position)
                         {
                             maxRes = work;
@@ -389,12 +436,10 @@ namespace TextTreeParser
                     else
                     {
                         input.current = last;
-                        if (errors != null)
-                        {
-                            throw new Exception(string.Format("SEMANTICS: Unable to use any of parsers at line {0}, position {1}\n", last.startPos.lineNo, last.startPos.linePos));
-                        }
+                        //throw new Exception(string.Format("SEMANTICS: Unable to use any of parsers at line {0}, position {1}\n", last.startPos.lineNo, last.startPos.linePos));
                     }
 
+                    TTErrorLog.Shared.goUp();
                     return succ;
                 }
             }
@@ -402,10 +447,19 @@ namespace TextTreeParser
             {
                 if (entry.args != null)
                 {
+                    TTErrorLog.Shared.enterDir("Line FIRST", last.startPos);
                     bool succ = false;
                     foreach (object c in entry.args)
                     {
-                        work = ParseObject(c, input);
+                        try
+                        {
+                            work = ParseObject(c, input);
+                        }
+                        catch(Exception ex)
+                        {
+                            TTErrorLog.Shared.addLog("{0}", ex.Message);
+                            work = null;
+                        }
                         if (work != null && input.current.endPos.position > last.endPos.position)
                         {
                             result.addSubnode(work);
@@ -415,6 +469,12 @@ namespace TextTreeParser
                         input.current = last;
                     }
 
+                    if (!succ)
+                    {
+                        //throw new Exception(string.Format("SEMANTICS: Cannot recognize token {2}:{3} at line {0}, position {1}", last.startPos.lineNo, last.startPos.linePos, last.Type, last.Value));
+                    }
+
+                    TTErrorLog.Shared.goUp();
                     return succ;
                 }
             }
@@ -422,6 +482,7 @@ namespace TextTreeParser
             {
                 if (entry.args != null && entry.args.Length > 0)
                 {
+                    TTErrorLog.Shared.enterDir("Line LIST", last.startPos);
                     bool succ = true;
                     while (succ)
                     {
@@ -438,6 +499,7 @@ namespace TextTreeParser
                         }
                     }
 
+                    TTErrorLog.Shared.goUp();
                     return true;
                 }
             }
@@ -445,8 +507,10 @@ namespace TextTreeParser
             {
                 if (entry.args != null && entry.args.Length > 0)
                 {
+                    TTErrorLog.Shared.enterDir("Line OBJECT", last.startPos);
                     last = input.current;
                     work = ParseObject(entry.args[0], input);
+                    TTErrorLog.Shared.goUp();
                     if (work != null)
                     {
                         input.current = last;
@@ -485,9 +549,11 @@ namespace TextTreeParser
                     else
                     {
                         input.next = last;
+                        TTErrorLog.Shared.addDir("parse string: " + s, false, last);
                         return null;
                     }
                 }
+                TTErrorLog.Shared.addDir("parse string: " + s, true, last);
                 return result.getTreeNode();
             }
             else if (c is TTCharset)
@@ -504,14 +570,19 @@ namespace TextTreeParser
                     else
                     {
                         input.next = last;
+                        TTErrorLog.Shared.addDir("parse charset: " + tcs.Name, (result.matchedString.Length > 0), last);
                         return result.getTreeNode();
                     }
                 }
+
+
             }
             else if (c is TTPattern)
             {
                 TTPattern pat = (c as TTPattern);
+                TTErrorLog.Shared.enterDir("pattern " + pat.Name, input.next);
                 TTAtom tn = pat.ParseAtom(input);
+                TTErrorLog.Shared.goUp();
                 return tn;
             }
             else if (c is TTParser)
@@ -519,8 +590,13 @@ namespace TextTreeParser
                 TTParser parser = c as TTParser;
 
                 TTAtomList tn = new TTAtomList();
+                TTErrorLog.Shared.enterDir("parser " + parser.Name, input.next);
                 if (parser.ParseAtomList(input, tn))
+                {
+                    TTErrorLog.Shared.goUp();
                     return tn.first;
+                }
+                TTErrorLog.Shared.goUp();
                 return null;
             }
 
@@ -529,9 +605,7 @@ namespace TextTreeParser
 
         public TTTreeNode ParseObject(object c, TTAtomList input)
         {
-            ParserResult result = new ParserResult();
-            result.parser = c;
-            TTAtom last;
+            TTAtom last = input.current;
             if (c is TTParserAtom)
             {
                 TTParserAtom s = c as TTParserAtom;
@@ -541,18 +615,22 @@ namespace TextTreeParser
                 {
                     TTTreeNode tn = new TTTreeNode();
                     tn.atom = c2;
+                    TTErrorLog.Shared.addDir(string.Format("atom {0}", c2.ToString()), true, last.startPos);
                     return tn;
                 }
                 else
                 {
                     input.current = last;
+                    TTErrorLog.Shared.addDir(string.Format("atom {0}", c2.ToString()), false, last.startPos);
                     return null;
                 }
             }
             else if (c is TTPattern)
             {
                 TTPattern pat = (c as TTPattern);
+                TTErrorLog.Shared.enterDir("pattern " + pat.Name, last.startPos);
                 TTTreeNode tn = pat.ParseTree(input);
+                TTErrorLog.Shared.goUp();
                 return tn;
             }
             else if (c is TTParser)
@@ -561,8 +639,13 @@ namespace TextTreeParser
 
                 TTTreeNode tn = new TTTreeNode();
                 tn.Name = parser.Name;
+                TTErrorLog.Shared.enterDir("parser " + parser.Name, last.startPos);
                 if (parser.ParseTree(input, tn))
+                {
+                    TTErrorLog.Shared.goUp();
                     return tn;
+                }
+                TTErrorLog.Shared.goUp();
                 return null;
             }
 

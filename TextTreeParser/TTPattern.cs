@@ -126,12 +126,15 @@ namespace TextTreeParser
 
             if (patternParallel)
             {
+                TTErrorLog.Shared.enterDir("#paralell", orig.startPos);
                 b = ParseParallel(input, orig);
             }
             else
             {
+                TTErrorLog.Shared.enterDir("#serial", orig.startPos);
                 b = ParseSerial(input, orig);
             }
+            TTErrorLog.Shared.goUp();
 
             if (b)
             {
@@ -320,22 +323,26 @@ namespace TextTreeParser
                 if (ce.eof)
                     return false;
                 char c = (char)pe.EntryObject;
-                Debugger.Log(0, "", "  ParseLine char " + c + "\n");
-                return (c == ce.c);
+                bool b = (c == ce.c);
+                TTErrorLog.Shared.addDir("char " + c, b, ce.pos);
+                return b;
             }
             else if (pe.EntryObject is string)
             {
                 int i = 0;
                 string s = pe.EntryObject as string;
-                Debugger.Log(0, "", "  ParseLine string " + s + "\n");
                 CharEntry ce;
                 while (i < s.Length)
                 {
                     ce = input.getChar();
                     if (ce.eof)
+                    {
+                        TTErrorLog.Shared.addDir("string " + s, false, ce.pos);
                         return false;
+                    }
                     if (ce.c != s[i])
                     {
+                        TTErrorLog.Shared.addDir("string " + s, false, ce.pos);
                         return false;
                     }
                     else
@@ -343,25 +350,32 @@ namespace TextTreeParser
                         i++;
                     }
                 }
+                TTErrorLog.Shared.addDir("string " + s, true, input.next);
                 return true;
             }
             else if (pe.EntryObject is TTCharset)
             {
                 TTCharset cset = pe.EntryObject as TTCharset;
-                Debugger.Log(0, "", "  ParseLine charset \"" + cset.Name + "\"\n");
                 CharEntry ce = input.getChar();
                 if (ce.eof)
+                {
+                    TTErrorLog.Shared.addDir("charset " + cset.Name, false, ce.pos);
                     return false;
-                return (cset.ContainsChar(ce.c));
+                }
+                bool b = (cset.ContainsChar(ce.c));
+                TTErrorLog.Shared.addDir("charset " + cset.Name, b, ce.pos);
+                return b;
             }
             else if (pe.EntryObject is TTPattern)
             {
                 TTPattern pat = pe.EntryObject as TTPattern;
-                Debugger.Log(0, "", "  ParseLine pattern \"" + pat.Name + "\" \n");
+                TTErrorLog.Shared.enterDir("pattern " + pat.Name, input.next);
                 TTAtom tn = pat.ParseAtom(input);
+                TTErrorLog.Shared.goUp();
                 return (tn != null);
             }
 
+            TTErrorLog.Shared.addDir("unknown line", false, input.next);
             return false;
         }
 
@@ -373,8 +387,20 @@ namespace TextTreeParser
                 if (ce == null)
                     return false;
                 TTParserAtom c = (TTParserAtom)pe.EntryObject;
-                return c.Match(ce);
+                bool b = c.Match(ce);
+                TTErrorLog.Shared.addDir("atom " + c.ToString(), b, ce.startPos);
+                return b;
             }
+            else if (pe.EntryObject is TTPattern)
+            {
+                TTPattern pat = pe.EntryObject as TTPattern;
+                TTErrorLog.Shared.enterDir("pattern " + pat.Name, input.current.startPos);
+                TTTreeNode tn = pat.ParseTree(input);
+                TTErrorLog.Shared.goUp();
+                return (tn != null);
+            }
+
+            TTErrorLog.Shared.addDir("unknown line", false, input.current.startPos);
             return false;
         }
 

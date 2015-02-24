@@ -21,6 +21,11 @@ namespace TextTreeParser
         }
     }
 
+    public class TextPositionClass
+    {
+        public TextPosition pos;
+    }
+
     public struct CharEntry
     {
         public bool eof;

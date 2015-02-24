@@ -140,6 +140,10 @@ namespace Text2Tree
             patternFloatNumber.addCharset(0, 1000, charsetDigits);
             patternFloatNumber.addChars(0, 1, "fF");
 
+            TTPattern patternIntegerNumber = new TTPattern("l_integer");
+            patternIntegerNumber.addChars(0, 1, "+-");
+            patternIntegerNumber.addCharset(0, 1000, charsetDigits);
+
             patternDoubleNumberExtension = new TTPattern("_double_exp");
             patternDoubleNumberExtension.addChars(1, 1, "Ee");
             patternDoubleNumberExtension.addChars(0, 1, "+-");
@@ -215,24 +219,29 @@ namespace Text2Tree
             patternPunctuation.addString(1, 1, "#");
 
             TTParser paNumber = new TTParser();
-            paNumber.Max(patternDoubleNumber, patternFloatNumber);
+            paNumber.Max(patternDoubleNumber, patternFloatNumber, patternIntegerNumber);
 
             // main parser line
             // contains all possible syntax entities
-            mainParserEntry = new TTParser(errorLog);
+            mainParserEntry = new TTParser();
             mainParserEntry.First(patternIdentifier, patternNewline, patternWhitespace,
                 paNumber, patternDoublequotedStringLiteral, patternQuotedStringLiteral,
                 patternInlineComment, patternComment, patternBrackets, patternOperators, patternPunctuation);
 
             // main parser definition
-            mainParser = new TTParser(errorLog);
+            mainParser = new TTParser();
             mainParser.List(mainParserEntry);
 
             TTPattern pat3 = new TTPattern("func_arg");
             TTPattern pat2 = new TTPattern("function_call");
+            TTPattern sentence = new TTPattern("sentence");
 
             pat3.IsParallel = true;
             pat3.addAtom(1, 1, "string_lit_a", null);
+            pat3.addAtom(1, 1, "string_lit", null);
+            pat3.addAtom(1, 1, "double", null);
+            pat3.addAtom(1, 1, "float", null);
+            pat3.addAtom(1, 1, "l_integer", null);
             pat3.addPattern(1, 1, pat2);
 
             pat2.addAtom(1, 1, "brack", "[");
@@ -241,10 +250,15 @@ namespace Text2Tree
             pat2.addPattern(0, 10000, pat3);
             pat2.addAtom(1, 1, "brack", "]");
 
-            TTParser syntaxItem = new TTParser(errorLog);
-            syntaxItem.First(pat2);
+            sentence.addAtom(1, 1, "id", "VAR");
+            sentence.addAtom(1, 1, "id", null);
+            sentence.addAtom(1, 1, "id", null);
+            sentence.addAtom(1, 1, "punc", ";");
 
-            syntaxParser = new TTParser(errorLog);
+            TTParser syntaxItem = new TTParser();
+            syntaxItem.First(pat2, sentence);
+
+            syntaxParser = new TTParser();
             syntaxParser.List(syntaxItem);
 
         }
@@ -257,15 +271,19 @@ namespace Text2Tree
 
             try
             {
-
+                TTErrorLog.Shared.enterDir("syntax", new TextPosition());
                 result = mainParser.ParseAtomList(ip, atomList);
+                TTErrorLog.Shared.goUp();
+
 
                 if (result)
                 {
                     atomList.removeAtomsWithType("ws");
                     atomList.removeAtomsWithType("nl");
 
+                    TTErrorLog.Shared.enterDir("semantics", new TextPosition());
                     syntaxParser.ParseTree(atomList, resultTree);
+                    TTErrorLog.Shared.goUp();
                 }
             }
             catch (Exception x)

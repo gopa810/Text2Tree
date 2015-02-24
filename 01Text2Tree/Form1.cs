@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using TextTreeParser;
 
 namespace Text2Tree
 {
@@ -24,8 +25,19 @@ namespace Text2Tree
 
             TTTest test = new TTTest();
 
-            test.main();
+            test.main(treeView1);
+            richTextBox1.Text = test.inputFile;
 
+        }
+
+        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            if (e.Node.Tag != null && (e.Node.Tag is TTErrorLog.TreeItem))
+            {
+                TTErrorLog.TreeItem treeItem = (TTErrorLog.TreeItem)e.Node.Tag;
+
+                richTextBox1.Select(treeItem.pos.position - 1, 1);
+            }
         }
     }
 }

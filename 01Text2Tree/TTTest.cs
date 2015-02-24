@@ -4,11 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using TextTreeParser;
+using System.Windows.Forms;
 
 namespace Text2Tree
 {
     public class TTTest
     {
+        public string inputFile = "";
+
         public void print(params object [] args)
         {
             foreach(object s in args)
@@ -96,10 +99,10 @@ namespace Text2Tree
             println("");
         }
 
-        public void main()
+        public void main(TreeView treeView1)
         {
             //testInputTextFile();
-            testParser2();
+            testParser2(treeView1);
         }
 
         public void testParser()
@@ -130,12 +133,13 @@ namespace Text2Tree
             stopFuncLog();
         }
 
-        public void testParser2()
+        public void testParser2(TreeView tv)
         {
             startFuncLog("Parser");
 
+            inputFile = "VAR CHARSET newline ; \r\n [newline addchars 'abcdef' [charset default]];\r\n-10.289829F  /*parpar 1.67E67*/ \r\n-.278E+0718 \"string\\\" here\" // commnet\n here ";
             TTInputTextFile ip = new TTInputTextFile();
-            ip.setContentString("VAR CHARSET newline ; \r\n [newline addchars 'abcdef' [charset default]];\r\n-10.289829F  /*parpar 1.67E67*/ \r\n-.278E+0718 \"string\\\" here\" // commnet\n here ");
+            ip.setContentString(inputFile);
 
             TTScript script = new TTScript();
 
@@ -148,10 +152,39 @@ namespace Text2Tree
                 println(" * * * TREE * * *");
                 print(script.resultTree);
             }
-
+            println(" * * * LOG * * *");
             println(script.errorLog.ToString());
+
+            if (tv != null)
+            {
+                TTErrorLog.Shared.validateSuccess();
+
+                TreeNode tn = GetNode(TTErrorLog.Shared.Root);
+                tv.Nodes.Add(tn);
+            }
+
             stopFuncLog();
         }
+
+        internal TreeNode GetNode(TTErrorLog.TreeItem node)
+        {
+            TreeNode tn = new TreeNode();
+            tn.Text = node.Name;
+            tn.ImageIndex = tn.SelectedImageIndex = (node.Success ? 1 : 0);
+            tn.Tag = node;
+            if (node.kids != null)
+            {
+                foreach (TTErrorLog.TreeItem ti in node.kids)
+                {
+                    TreeNode tn2 = GetNode(ti);
+                    tn.Nodes.Add(tn2);
+                }
+            }
+
+            return tn;
+        }
+
+
         public void testInputTextFile()
         {
             startFuncLog("InputTextFile");

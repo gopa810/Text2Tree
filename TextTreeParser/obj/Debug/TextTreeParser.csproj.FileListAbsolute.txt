@@ -2,3 +2,4 @@ C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\bin\Debug\TextT
 C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\bin\Debug\TextTreeParser.pdb
 C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\obj\Debug\TextTreeParser.dll
 C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\obj\Debug\TextTreeParser.pdb
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\obj\Debug\TextTreeParser.csprojResolveAssemblyReference.cache

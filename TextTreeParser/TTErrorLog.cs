@@ -31,11 +31,35 @@ namespace TextTreeParser
                 }
                 return Success;
             }
+
+            internal TreeItem getLastNode(string p)
+            {
+                TreeItem curr = null;
+                TreeItem ti = null;
+
+                if (kids != null)
+                {
+                    foreach (TreeItem k in kids)
+                    {
+                        curr = k.getLastNode(p);
+                        if (curr != null)
+                            ti = curr;
+                    }
+                }
+
+                if (ti != null)
+                    return ti;
+
+                if (Name.Equals(p))
+                    return this;
+
+                return null;
+            }
         }
 
         public TreeItem Root;
         public TreeItem Current;
-
+        public string FinalMessage = "";
         public static TTErrorLog Shared = new TTErrorLog();
 
         public TTErrorLog()
@@ -90,5 +114,24 @@ namespace TextTreeParser
         {
             Root.validateSuccess();
         }
+
+        public void resolveLastError()
+        {
+            TreeItem lastSerial = null;
+            TreeItem ti = this.Root;
+
+            lastSerial = this.Root.getLastNode("#serial");
+
+            if (lastSerial != null && lastSerial.kids != null && lastSerial.kids.Count > 0)
+            {
+                ti = lastSerial.kids[lastSerial.kids.Count - 1];
+            }
+
+            if (ti.Success == false)
+            {
+                this.FinalMessage += string.Format("Expected {0} / {1} at line {2}, position {3}", ti.Name, ti.Value, ti.pos.lineNo, ti.pos.linePos);
+            }
+        }
+
     }
 }

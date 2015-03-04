@@ -26,6 +26,11 @@ namespace TextTreeParser
             atom = null;
         }
 
+        public TTTreeNode(string name)
+        {
+            Name = name;
+        }
+
         #region Basic tree hierarchy methods
 
         public TTTreeNode firstChild
@@ -34,6 +39,10 @@ namespace TextTreeParser
             {
                 return firstSubnode;
             }
+            set
+            {
+                firstSubnode = value;
+            }
         }
 
         public TTTreeNode nextSibling
@@ -41,6 +50,10 @@ namespace TextTreeParser
             get
             {
                 return nextNode;
+            }
+            set
+            {
+                nextNode = value;
             }
         }
 
@@ -81,6 +94,8 @@ namespace TextTreeParser
 
         public void addSubnode(TTTreeNode node)
         {
+            if (node == null)
+                return;
             node.parentNodeRef = this;
             if (firstSubnode == null)
             {
@@ -282,6 +297,45 @@ namespace TextTreeParser
             return tret;
         }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="name">Name of tree node, or null if not checked</param>
+        /// <param name="atomType">Type of atom or null if not checked</param>
+        /// <param name="atomValue">Value of atom or null if not checked</param>
+        /// <returns>Returns node with given characteristics</returns>
+        public TTTreeNode findNode(string name, string atomType, string atomValue, TTTreeNode sinceChild)
+        {
+            TTTreeNode wi = sinceChild;
+            if (wi == null)
+                wi = this.firstChild;
+            else
+                wi = wi.nextSibling;
+            bool b;
+
+            if (wi == null)
+                return null;
+
+            do
+            {
+                b = true;
+                if (name != null && !wi.Name.Equals(name))
+                    b = false;
+                if (atomType != null && (wi.atom == null || !wi.atom.Type.Equals(atomType)))
+                {
+                    b = false;
+                }
+                if (atomValue != null && (wi.atom == null || !wi.atom.Value.Equals(atomValue)))
+                    b = false;
+                if (b)
+                    return wi;
+                wi = wi.nextSibling;
+            }
+            while (wi != null);
+
+            return null;
+        }
 
     }
 }

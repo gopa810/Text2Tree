@@ -5,6 +5,7 @@ using System.Text;
 using System.Diagnostics;
 using TextTreeParser;
 using System.Windows.Forms;
+using System.IO;
 
 namespace Text2Tree
 {
@@ -99,10 +100,10 @@ namespace Text2Tree
             println("");
         }
 
-        public void main(TreeView treeView1)
+        public void main(string textToParse, TreeView treeView1, TreeView treeView2)
         {
             //testInputTextFile();
-            testParser2(treeView1);
+            testParser2(textToParse, treeView1, treeView2);
         }
 
         public void testParser()
@@ -133,11 +134,23 @@ namespace Text2Tree
             stopFuncLog();
         }
 
-        public void testParser2(TreeView tv)
+        public void testParser2(string textToParse, TreeView tv, TreeView restv)
         {
             startFuncLog("Parser");
+            /*
+            VAR CHARSET newline;
+            VAR PATTERN pat2;
 
-            inputFile = "VAR CHARSET newline ; \r\n [newline addchars 'abcdef' [charset default]];\r\n-10.289829F  /*parpar 1.67E67*/ \r\n-.278E+0718 \"string\\\" here\" // commnet\n here ";
+            [pat2 SETMETHOD FIRST];
+            [pat3 ADDSTRING 1 1 'func'];
+            
+            func main {
+               [patMain exec];
+            }
+
+             */
+            inputFile = textToParse;
+//            inputFile = "VAR CHARSET newline;\r\n [newline addchars 'abcdef' [charset default]];\r\n-10.289829F + 20; /*parpar 1.67E67*/ \r\n-.278E+0718 \"string\\\" here\" // commnet\n here ";
             TTInputTextFile ip = new TTInputTextFile();
             ip.setContentString(inputFile);
 
@@ -163,6 +176,12 @@ namespace Text2Tree
                 tv.Nodes.Add(tn);
             }
 
+            if (restv != null)
+            {
+                TreeNode tn = GetNodeA(script.resultTree);
+                restv.Nodes.Add(tn);
+            }
+
             stopFuncLog();
         }
 
@@ -179,6 +198,37 @@ namespace Text2Tree
                     TreeNode tn2 = GetNode(ti);
                     tn.Nodes.Add(tn2);
                 }
+            }
+
+            return tn;
+        }
+
+        internal TreeNode GetNodeA(TTTreeNode node)
+        {
+            TreeNode tn = new TreeNode();
+            tn.Text= "";
+            if (node.Name == null)
+            {
+                tn.Text = "(NULL)";
+            }
+            else if (node.Name.Length > 0)
+            {
+                tn.Text = node.Name;
+            }
+            if (node.atom != null)
+            {
+                if (tn.Text.Length > 0)
+                    tn.Text += " := ";
+                tn.Text += node.atom.ToString();
+            }
+
+            tn.Tag = node;
+            TTTreeNode ti = node.firstChild;
+            while (ti != null)
+            {
+                TreeNode tn2 = GetNodeA(ti);
+                tn.Nodes.Add(tn2);
+                ti = ti.nextSibling;
             }
 
             return tn;

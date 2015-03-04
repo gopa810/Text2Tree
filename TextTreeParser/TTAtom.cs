@@ -15,6 +15,16 @@ namespace TextTreeParser
         public TextPosition startPos;
         public TextPosition endPos;
 
+        public TTAtom()
+        {
+        }
+
+        public TTAtom(string t, string v)
+        {
+            Type = t;
+            Value = v;
+        }
+
         public TTAtom last
         {
             get

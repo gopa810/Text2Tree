@@ -82,6 +82,8 @@ namespace TextTreeParser
         /// </summary>
         public string TestValue;
 
+        public string OutputIdentity = "";
+
         /// <summary>
         /// default are null values, that means given parameter 
         /// is not used for matching in function Match
@@ -172,6 +174,7 @@ namespace TextTreeParser
         }
 
         public string Name = string.Empty;
+        public string OutputIdentity = string.Empty;
         public List<TTParserEntry> Lines = new List<TTParserEntry>();
 
         public void Max(params object[] arg)
@@ -430,7 +433,7 @@ namespace TextTreeParser
                     if (maxRes != null)
                     {
                         succ = true;
-                        result.addSubnode(maxRes);
+                        addSubnodeToNode(result, maxRes);
                         input.current = max;
                     }
                     else
@@ -460,9 +463,9 @@ namespace TextTreeParser
                             TTErrorLog.Shared.addLog("{0}", ex.Message);
                             work = null;
                         }
-                        if (work != null && input.current.endPos.position > last.endPos.position)
+                        if (work != null && input.current != null && input.current.endPos.position > last.endPos.position)
                         {
-                            result.addSubnode(work);
+                            addSubnodeToNode(result, work);
                             succ = true;
                             break;
                         }
@@ -490,7 +493,7 @@ namespace TextTreeParser
                         work = ParseObject(entry.args[0], input);
                         if (work != null)
                         {
-                            result.addSubnode(work);
+                            addSubnodeToNode(result, work);
                         }
                         else
                         {
@@ -525,6 +528,21 @@ namespace TextTreeParser
             }
 
             return false;
+        }
+
+        private static void addSubnodeToNode(TTTreeNode result, TTTreeNode work)
+        {
+            if (work.Name == null)
+            {
+            }
+            else if (work.Name.Length == 0 && work.atom == null)
+            {
+                result.addSubnode(work.firstChild);
+            }
+            else
+            {
+                result.addSubnode(work);
+            }
         }
 
         public TTAtom ParseObject(object c, TTInputTextFile input)
@@ -581,7 +599,7 @@ namespace TextTreeParser
             {
                 TTPattern pat = (c as TTPattern);
                 TTErrorLog.Shared.enterDir("pattern " + pat.Name, input.next);
-                TTAtom tn = pat.ParseAtom(input);
+                TTAtom tn = pat.ParseText(input);
                 TTErrorLog.Shared.goUp();
                 return tn;
             }
@@ -614,6 +632,7 @@ namespace TextTreeParser
                 if (c2 != null && s.Match(c2))
                 {
                     TTTreeNode tn = new TTTreeNode();
+                    tn.Name = s.OutputIdentity;
                     tn.atom = c2;
                     TTErrorLog.Shared.addDir(string.Format("atom {0}", c2.ToString()), true, last.startPos);
                     return tn;
@@ -629,7 +648,18 @@ namespace TextTreeParser
             {
                 TTPattern pat = (c as TTPattern);
                 TTErrorLog.Shared.enterDir("pattern " + pat.Name, last.startPos);
-                TTTreeNode tn = pat.ParseTree(input);
+                TTTreeNode tn = pat.ParseAtoms(input);
+                if (tn != null && (tn.Name != null && tn.Name.Length == 0)
+                    && pat.OutputIdentity != null && pat.OutputIdentity.Length > 0)
+                    tn.Name = pat.OutputIdentity;
+                /*if (tn != null && pat.Name != null && pat.Name.Length > 0)
+                {
+                    TTTreeNode ntn = new TTTreeNode();
+                    ntn.Name = pat.Name;
+                    ntn.addSubnode(tn);
+                    tn = ntn;
+                } */
+                //tn.Name = pat.Name;
                 TTErrorLog.Shared.goUp();
                 return tn;
             }
@@ -638,7 +668,7 @@ namespace TextTreeParser
                 TTParser parser = c as TTParser;
 
                 TTTreeNode tn = new TTTreeNode();
-                tn.Name = parser.Name;
+                tn.Name = parser.OutputIdentity;
                 TTErrorLog.Shared.enterDir("parser " + parser.Name, last.startPos);
                 if (parser.ParseTree(input, tn))
                 {

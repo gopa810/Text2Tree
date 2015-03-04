@@ -15,6 +15,18 @@ namespace Text2Tree
         public Form1()
         {
             InitializeComponent();
+
+            inputTextBox.Text = "            VAR CHARSET newline; \r\n" +
+            "VAR PATTERN pat2; \r\n" +
+            "    \r\n" +
+            "[pat2 SETMETHOD FIRST]; \r\n" +
+            "[pat3 ADDSTRING 1 1 'func']; \r\n" +
+            "[pat4 REMOVE [pat2 HEAD 2]]; \r\n" +
+            "func main { \r\n" +
+            "   [patMain exec]; \r\n" +
+            "   [pat2 reset];\r\n" +
+            "   a = (w + 3) - 2;" + 
+            "} \r\n";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -25,8 +37,21 @@ namespace Text2Tree
 
             TTTest test = new TTTest();
 
-            test.main(treeView1);
+            try
+            {
+                test.main(inputTextBox.Text, treeView1, treeView2);
+            }
+            catch (Exception ex)
+            {
+                TTErrorLog.Shared.addLog("{0}", ex.Message);
+            }
+
+            TTErrorLog.Shared.resolveLastError();
+
+            richTextBox2.Text = TTErrorLog.Shared.FinalMessage;
             richTextBox1.Text = test.inputFile;
+
+
 
         }
 
@@ -36,8 +61,24 @@ namespace Text2Tree
             {
                 TTErrorLog.TreeItem treeItem = (TTErrorLog.TreeItem)e.Node.Tag;
 
-                richTextBox1.Select(treeItem.pos.position - 1, 1);
+                try
+                {
+                    richTextBox1.Select(treeItem.pos.position, 1);
+                }
+                catch
+                {
+                }
             }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            treeView1.ExpandAll();
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            treeView2.ExpandAll();
         }
     }
 }

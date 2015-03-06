@@ -7,18 +7,12 @@ namespace TextTreeParser
 {
     public class TTTreeNode
     {
-
-
         // attributes of tree node
         public TTAtom atom = null;
         public string Name = string.Empty;
 
-        // 
-        protected TTTreeNode firstSubnode = null;
-        protected TTTreeNode lastSubnode = null;
-        protected TTTreeNode nextNode = null;
-        protected TTTreeNode parentNodeRef = null;
-
+        // children nodes
+        protected TTTreeNodeCollection child = null;
 
         // constructors
         public TTTreeNode()
@@ -31,310 +25,131 @@ namespace TextTreeParser
             Name = name;
         }
 
-        #region Basic tree hierarchy methods
 
-        public TTTreeNode firstChild
+        public TTTreeNodeCollection Children
         {
             get
             {
-                return firstSubnode;
+                if (child == null)
+                    return new TTTreeNodeCollection();
+                return child;
             }
             set
             {
-                firstSubnode = value;
+                child = value;
             }
-        }
-
-        public TTTreeNode nextSibling
-        {
-            get
-            {
-                return nextNode;
-            }
-            set
-            {
-                nextNode = value;
-            }
-        }
-
-        public TTTreeNode parentNode
-        {
-            get
-            {
-                return parentNodeRef;
-            }
-        }
-
-        public int getSubnodesCount()
-        {
-            int count = 0;
-            TTTreeNode item = firstSubnode;
-            while (item != null)
-            {
-                count++;
-                item = item.nextNode;
-            }
-            return count;
-        }
-
-        public TTTreeNode getSubnodeAtIndex(int index)
-        {
-            int count = 0;
-            TTTreeNode item = firstSubnode;
-            while (item != null)
-            {
-                if (count == index)
-                    return item;
-                count++;
-                item = item.nextNode;
-            }
-
-            return null;
         }
 
         public void addSubnode(TTTreeNode node)
         {
-            if (node == null)
-                return;
-            node.parentNodeRef = this;
-            if (firstSubnode == null)
+            if (child == null)
+                child = new TTTreeNodeCollection();
+            child.addNode(node);
+        }
+
+        public void addCollection(TTTreeNodeCollection col)
+        {
+            if (child == null)
+                child = new TTTreeNodeCollection(); 
+            child.addCollection(col);
+        }
+
+        public bool canMatchAtom(string name, string atomType, string atomValue)
+        {
+            if (name != null && !this.Name.Equals(name))
+                return false;
+            if (this.atom != null)
             {
-                firstSubnode = node;
-                lastSubnode = node.lastNode;
+                if (atomType != null && !this.atom.Type.Equals(atomType))
+                    return false;
+                if (atomValue != null && !this.atom.Value.Equals(atomValue))
+                    return false;
             }
             else
             {
-                lastSubnode.nextNode = node;
-                lastSubnode = node.lastNode;
+                return false;
             }
 
+            return true;
         }
 
-        public TTTreeNode lastNode
+        public TTTreeNodeCollection takeAllChildren()
         {
-            get
+            TTTreeNodeCollection tnc = this.child;
+            if (tnc != null)
             {
-                TTTreeNode item = nextNode;
-                while (item != null)
-                {
-                    if (item.nextNode == null)
-                        return item;
-                    item = item.nextNode;
-                }
-
-                return this;
+                this.child = new TTTreeNodeCollection();
             }
+            return tnc;
         }
 
-        public void insertNodesAfter(TTTreeNode nodes)
+        public TTTreeNodeCollection takeChildrenBefore(TTTreeNode tn)
         {
-            TTTreeNode item = nodes;
-            while (item != null)
-            {
-                item.parentNodeRef = this.parentNode;
-                if (item.nextNode == null)
-                {
-                    item.nextNode = this.nextNode;
-                    break;
-                }
-                item = item.nextNode;
-            }
-            this.nextNode = nodes;
-        }
-
-        public void removeSelf()
-        {
-            if (parentNode != null)
-            {
-                parentNode.removeNode(this);
-            }
-        }
-
-        public void removeNode(TTTreeNode tn)
-        {
-            if (this.firstSubnode == tn)
-            {
-                if (this.lastSubnode == tn)
-                {
-                    this.firstSubnode = null;
-                    this.lastSubnode = null;
-                }
-                else
-                {
-                    this.firstSubnode = tn.nextNode;
-                }
-            }
-            else
-            {
-                TTTreeNode item = this.firstSubnode;
-                while (item != null)
-                {
-                    if (item.nextNode == tn)
-                    {
-                        item.nextNode = tn.nextNode;
-                        break;
-                    }
-                    item = item.nextNode;
-                }
-            }
-            tn.nextNode = null;
-            tn.parentNodeRef = null;
-        }
-
-
-        #endregion
-
-
-
-        public void removeSubnodesWithType(string subType)
-        {
-            TTTreeNode removing;
-            TTTreeNode tn = this.firstChild;
-            while (tn != null)
-            {
-                if (tn.atom != null && tn.atom.Type.Equals(subType))
-                {
-                    removing = tn;
-                    tn = tn.nextSibling;
-                    removing.removeSelf();
-                }
-                else
-                {
-                    tn.removeSubnodesWithType(subType);
-                    tn = tn.nextSibling;
-                }
-            }
-        }
-
-        public void flattenSubnodesWithType(string sType)
-        {
-            TTTreeNode removing = null;
-            TTTreeNode tn = this.firstChild;
-            while (tn != null)
-            {
-                if (tn.atom != null && tn.atom.Type.Equals(sType))
-                {
-                    tn.insertNodesAfter(tn.firstChild);
-                    removing = tn;
-                    tn = tn.nextSibling;
-                    removing.removeSelf();
-                }
-                else
-                {
-                    tn = tn.nextSibling;
-                }
-            }
-        }
-
-        public void makeSubranges(string subTypeStart, string subValueStart, string subTypeEnd, string subValueEnd, string name)
-        {
-            TTTreeNode tn = this.firstSubnode;
-            TTTreeNode next;
-            List<TTTreeNode> stack = new List<TTTreeNode>();
-            while (tn != null)
-            {
-                tn.makeSubranges(subTypeStart, subValueStart, subTypeEnd, subValueEnd, name);
-
-                if ((subTypeStart == null || (tn.atom != null && tn.atom.Type.Equals(subTypeStart)))
-                    && (subValueStart == null || (tn.atom != null && tn.atom.Value.Equals(subValueStart))))
-                {
-                    stack.Add(tn);
-                    tn = tn.nextNode;
-                }
-                else if ((subTypeEnd == null || (tn.atom != null && tn.atom.Type.Equals(subTypeEnd)))
-                    && (subValueEnd == null || (tn.atom != null && tn.atom.Value.Equals(subValueEnd))))
-                {
-                    if (stack.Count > 0)
-                    {
-                        next = tn.nextNode;
-                        TTTreeNode t1 = stack[stack.Count - 1];
-                        if (tn.parentNode != null)
-                        {
-                            TTTreeNode t2 = tn.parentNode.extractRange(t1, tn);
-                            if (t2 != null)
-                                t1.addSubnode(t2);
-                            tn.removeSelf();
-                            t1.Name = name;
-                            while (t2 != null)
-                            {
-                                t2.parentNodeRef = t1;
-                                t2 = t2.nextNode;
-                            }
-                        }
-                        stack.RemoveAt(stack.Count - 1);
-                        tn = next;
-                    }
-                }
-                else
-                {
-                    tn = tn.nextNode;
-                }
-
-            }
-        }
-
-
-        public TTTreeNode extractRange(TTTreeNode t1, TTTreeNode t2)
-        {
-            if (t1.parentNode != t2.parentNode)
+            if (child == null)
                 return null;
 
-            TTTreeNode tret = t1.nextNode;
-            TTTreeNode t3 = tret;
-            while (t3 != null && t3.nextNode != t2)
+            if (this.child.checkIsSubnode(tn))
             {
-                t3.parentNodeRef = null;
-                t3 = t3.nextNode;
+                return this.child.takeChildrenBefore(tn);
             }
-
-            if (t3 != null)
-            {
-                t3.nextNode = null;
-            }
-            t1.nextNode = t2;
-
-
-            return tret;
-        }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="name">Name of tree node, or null if not checked</param>
-        /// <param name="atomType">Type of atom or null if not checked</param>
-        /// <param name="atomValue">Value of atom or null if not checked</param>
-        /// <returns>Returns node with given characteristics</returns>
-        public TTTreeNode findNode(string name, string atomType, string atomValue, TTTreeNode sinceChild)
-        {
-            TTTreeNode wi = sinceChild;
-            if (wi == null)
-                wi = this.firstChild;
-            else
-                wi = wi.nextSibling;
-            bool b;
-
-            if (wi == null)
-                return null;
-
-            do
-            {
-                b = true;
-                if (name != null && !wi.Name.Equals(name))
-                    b = false;
-                if (atomType != null && (wi.atom == null || !wi.atom.Type.Equals(atomType)))
-                {
-                    b = false;
-                }
-                if (atomValue != null && (wi.atom == null || !wi.atom.Value.Equals(atomValue)))
-                    b = false;
-                if (b)
-                    return wi;
-                wi = wi.nextSibling;
-            }
-            while (wi != null);
 
             return null;
+        }
+
+        public TTTreeNodeCollection takeChildrenAfter(TTTreeNode tn)
+        {
+            if (child == null)
+                return null;
+
+            if (this.child.checkIsSubnode(tn))
+            {
+                return this.child.takeChildrenAfter(tn);
+            }
+
+            return null;
+        }
+
+        public TTTreeNode findNodeForward(string name, string atomType, string atomValue, TTTreeNode sinceChild)
+        {
+            if (child == null) return null;
+            return child.findNodeForward(name, atomType, atomValue, sinceChild);
+        }
+
+        public TTTreeNode findNodeBackward(string name, string atomType, string atomValue, TTTreeNode sinceChild)
+        {
+            if (child == null) return null;
+            return child.findNodeBackward(name, atomType, atomValue, sinceChild);
+        }
+
+        public TTTreeNode removeHead()
+        {
+            if (child == null) return null;
+            return child.removeFirstNode();
+        }
+
+        public TTTreeNode removeTail()
+        {
+            if (child != null)
+                return child.removeLastNode();
+            return null;
+        }
+
+        public TTTreeNode getTail()
+        {
+            if (child == null)
+                return null;
+            if (child.last == null)
+                return null;
+            return child.last.node;
+        }
+
+        public TTTreeNode getHead()
+        {
+            if (child == null)
+                return null;
+            if (child.first == null)
+                return null;
+            return child.first.node;
         }
 
     }

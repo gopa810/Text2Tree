@@ -357,13 +357,26 @@ namespace Text2Tree
             pat3.addAtom(1, 1, "id", null, "func_name");
             pat3.addPattern(1, 1, getPattern(pats, "exec_block"), "block");
 
+            pat3 = getPattern(pats, "if_cmd_elsepart");
+            pat3.addAtom(1, 1, "id", "else", null);
+            pat3.addPattern(1, 1, getPattern(pats, "exec_block"), "false_block");
+
+
+            pat3 = getPattern(pats, "if_cmd");
+            pat3.OutputIdentity = "cmd.if";
+            pat3.addAtom(1, 1, "id", "if", null);
+            pat3.addPattern(1, 1, getPattern(pats, "expression_single"), "condition");
+            pat3.addPattern(1, 1, getPattern(pats, "exec_block"), "true_block");
+            pat3.addPattern(1, 1, getPattern(pats, "if_cmd_elsepart"), "");
+
             pat3 = getPattern(pats, "statement");
-            pat3.OutputIdentity = "statement";
+            pat3.OutputIdentity = "";
             pat3.MatchingMethod = TTPattern.METHOD_MAX;
             pat3.addAtom(1, 1, "EOF", "EOF", null);
             pat3.addPattern(1, 1, getPattern(pats, "variable_definition"), "var_def");
-            pat3.addPattern(1, 1, getPattern(pats, "expression_with_end"), "expression_w_end");
+            pat3.addPattern(1, 1, getPattern(pats, "expression_with_end"), "expression_statement");
             pat3.addPattern(1, 1, getPattern(pats, "func_definition"), "func_def");
+            pat3.addPattern(1, 1, getPattern(pats, "if_cmd"), "cmd.if");
 
             TTParser syntaxItem = new TTParser();
             syntaxItem.First(new TTParserAtom("EOF", "EOF"), getPattern(pats, "statement"));

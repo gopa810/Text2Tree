@@ -23,6 +23,7 @@ namespace Text2Tree
             "[pat3 ADDSTRING 1 1 'func']; \r\n" +
             "[pat4 REMOVE [pat2 HEAD 2]]; \r\n" +
             "func main { \r\n" +
+            "   if (a) { then; } else {345;} \r\n" + 
             "   [patMain exec]; \r\n" +
             "   [pat2 reset];\r\n" +
             "   a = (w + 3) - 2;" + 
@@ -36,6 +37,8 @@ namespace Text2Tree
 
 
             TTTest test = new TTTest();
+            treeView1.Nodes.Clear();
+            treeView2.Nodes.Clear();
 
             try
             {
@@ -73,12 +76,16 @@ namespace Text2Tree
 
         private void button2_Click(object sender, EventArgs e)
         {
+            treeView1.BeginUpdate();
             treeView1.ExpandAll();
+            treeView1.EndUpdate();
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
+            treeView2.BeginUpdate();
             treeView2.ExpandAll();
+            treeView2.EndUpdate();
         }
     }
 }

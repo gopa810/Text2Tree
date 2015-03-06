@@ -49,6 +49,7 @@
     <Compile Include="TTParser.cs" />
     <Compile Include="TTPattern.cs" />
     <Compile Include="TTTreeNode.cs" />
+    <Compile Include="TTTreeNodeCollection.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

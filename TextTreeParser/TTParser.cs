@@ -537,7 +537,7 @@ namespace TextTreeParser
             }
             else if (work.Name.Length == 0 && work.atom == null)
             {
-                result.addSubnode(work.firstChild);
+                result.addCollection(work.Children);
             }
             else
             {

@@ -195,79 +195,117 @@ namespace TextTreeParser
         {
             bool b = false;
 
-            string[][] opers = new string[][] {
-                new string[] {null, "oper", "=", "oper.assign"},
-                new string[] {null, "oper", "<", "oper.lt"},
-                new string[] {null, "oper", "&", "oper.band"},
-                new string[] {null, "oper", "|", "oper.bor"},
-                new string[] {null, "oper", ">", "oper.gt"},
-                new string[] {null, "oper", "+", "oper.plus"},
-                new string[] {null, "oper", "-", "oper.minus"},
-                new string[] {null, "oper", "*", "oper.mult"},
-                new string[] {null, "oper", "/", "oper.div"},
-                new string[] {null, "oper", "~", "oper.xor"},
-                new string[] {null, "oper", "%", "oper.mod"},
-                new string[] {null, "oper", "<<", "oper.lshift"},
-                new string[] {null, "oper", ">>", "oper.rshift"},
-                new string[] {null, "oper", "+=", "oper.plusassign"},
-                new string[] {null, "oper", "-=", "oper.minusassign"},
-                new string[] {null, "oper", "*=", "oper.multassign"},
-                new string[] {null, "oper", "/=", "oper.divassign"},
-                new string[] {null, "oper", "~=", "oper.xorassign"},
-                new string[] {null, "oper", "%=", "oper.modassign"},
-                new string[] {null, "oper", "&&", "oper.land"},
-                new string[] {null, "oper", "||", "oper.lor"},
-                new string[] {null, "oper", "&=", "oper.bandassign"},
-                new string[] {null, "oper", "|=", "oper.borassign"},
-                new string[] {null, "oper", "<=", "oper.le"},
-                new string[] {null, "oper", ">=", "oper.ge"},
-                new string[] {null, "oper", "!=", "oper.neq"},
-                new string[] {null, "oper", "==", "oper.eq"},
-                new string[] {null, "oper", "<<=", "oper.lshiftassign"},
-                new string[] {null, "oper", ">>=", "oper.rshiftassign"},
-                new string[] {null, "oper", "&&=", "oper.landassign"},
-                new string[] {null, "oper", "||=", "oper.lorassign"},
-            };
-
             if (node.Name.Equals("expression"))
             {
-                foreach (string[] line in opers)
+                if (!b) b = TryBinaryDivide(node, null, "oper", "<", "oper.lt");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "&", "oper.band");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "|", "oper.bor");
+                if (!b) b = TryBinaryDivide(node, null, "oper", ">", "oper.gt");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "+", "oper.plus");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "-", "oper.minus");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "*", "oper.mult");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "/", "oper.div");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "~", "oper.xor");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "%", "oper.mod");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "<<", "oper.lshift");
+                if (!b) b = TryBinaryDivide(node, null, "oper", ">>", "oper.rshift");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "&&", "oper.land");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "||", "oper.lor");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "<=", "oper.le");
+                if (!b) b = TryBinaryDivide(node, null, "oper", ">=", "oper.ge");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "!=", "oper.neq");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "==", "oper.eq");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "=", "oper.assign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "&=", "oper.bandassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "|=", "oper.borassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "+=", "oper.plusassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "-=", "oper.minusassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "*=", "oper.multassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "/=", "oper.divassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "~=", "oper.xorassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "%=", "oper.modassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "<<=", "oper.lshiftassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", ">>=", "oper.rshiftassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "&&=", "oper.landassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "||=", "oper.lorassign");
+                /*if (!b) b = TryUnaryPrefix(node, null, "oper", "++", "unary.inc.prefix", "expression");
+                if (!b) b = TryUnaryPostfix(node, null, "oper", "++", "unary.inc.postfix", "expression");
+                */
+
+                if (b)
                 {
-                    b = TryBinaryDivide(node, line[0], line[1], line[2], line[3]);
-                    if (b) break;
+                    foreach (TTTreeNode iter in node.Children)
+                    {
+                        RationalizeWhenExpression(iter);
+                    }
                 }
             }
 
             return true;
         }
 
-        public bool TryBinaryDivide(TTTreeNode node, string nodeName, string atomType, string atomValue, string newNodeName)
+        public bool TryUnaryPrefix(TTTreeNode node, string nodeName, string atomType, string atomValue, string newNodeName, string newSubnodeName)
         {
             TTTreeNode tn;
-            tn = node.findNode(nodeName, atomType, atomValue, null);
+            tn = node.getHead();
             if (tn != null)
             {
-                node.Name = newNodeName;
-                node.atom = null;
-
-                TTTreeNode a1 = new TTTreeNode("expression");
-                TTTreeNode a2 = new TTTreeNode("expression");
-                TTTreeNode target = a1;
-
-                a1.firstChild = node.firstChild;
-                node.firstChild = null;
-                a2.firstChild = tn.nextSibling;
-                tn.nextSibling = null;
-                a1.removeNode(tn);
-
-                node.addSubnode(a1);
-                node.addSubnode(a2);
-
-                RationalizeWhenExpression(a1);
-                RationalizeWhenExpression(a2);
+                if (tn.canMatchAtom(nodeName, atomType, atomValue))
+                {
+                    TTTreeNodeCollection subs = node.takeChildrenAfter(tn);
+                    tn.addCollection(subs);
+                    tn.Name = newSubnodeName;
+                    node.Name = newNodeName;
+                    return true;
+                }
             }
 
-            return (tn != null);
+            return false;
+        }
+
+        public bool TryUnaryPostfix(TTTreeNode node, string nodeName, string atomType, string atomValue, string newNodeName, string newSubnodeName)
+        {
+            TTTreeNode tn;
+            tn = node.getTail();
+            if (tn != null)
+            {
+                if (tn.canMatchAtom(nodeName, atomType, atomValue))
+                {
+                    TTTreeNodeCollection subs = node.takeChildrenBefore(tn);
+                    tn.addCollection(subs);
+                    tn.Name = newSubnodeName;
+                    node.Name = newNodeName;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool TryBinaryDivide(TTTreeNode node, string nodeName, string atomType, string atomValue, string newNodeName)
+        {
+            TTTreeNode dividerNode;
+            dividerNode = node.findNodeForward(nodeName, atomType, atomValue, null);
+            if (dividerNode != null)
+            {
+                node.atom = null;
+
+                TTTreeNodeCollection a1, a2;
+
+                a1 = node.takeChildrenBefore(dividerNode);
+                node.removeHead();
+                a2 = node.takeAllChildren();
+
+                node.addSubnode(a1.createEncapsulationNode("expression"));
+                node.addSubnode(a2.createEncapsulationNode("expression"));
+                node.Name = newNodeName;
+
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private TTTreeNode ParseAtomsMax(TTAtomList input, TTAtom orig)
@@ -436,7 +474,7 @@ namespace TextTreeParser
                         }
                         else if (lv.Name.Length == 0 && lv.atom == null)
                         {
-                            rv.addSubnode(lv.firstChild);
+                            rv.addCollection(lv.Children);
                         }
                         else
                         {

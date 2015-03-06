@@ -74,12 +74,6 @@ namespace Text2Tree
                     println("TreeNode NULL");
                 }
             }
-            TTTreeNode cn = pr.firstChild;
-            while (cn != null)
-            {
-                print(cn, level + 1);
-                cn = cn.nextSibling;
-            }
         }
 
         public void print(TTTreeNode pr)
@@ -223,12 +217,10 @@ namespace Text2Tree
             }
 
             tn.Tag = node;
-            TTTreeNode ti = node.firstChild;
-            while (ti != null)
+            foreach(TTTreeNode ti in node.Children)
             {
                 TreeNode tn2 = GetNodeA(ti);
                 tn.Nodes.Add(tn2);
-                ti = ti.nextSibling;
             }
 
             return tn;

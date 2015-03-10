@@ -148,7 +148,7 @@ namespace Text2Tree
             TTInputTextFile ip = new TTInputTextFile();
             ip.setContentString(inputFile);
 
-            TTScript script = new TTScript();
+            TLanguageGScript script = new TLanguageGScript();
 
             script.Initialize();
 

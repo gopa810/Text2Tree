@@ -6,7 +6,7 @@ using TextTreeParser;
 
 namespace Text2Tree
 {
-    public class TTScript
+    public class TLanguageGScript: TLanguageBase
     {
         TTCharset charsetAlpha;
         TTCharset charsetDigits;
@@ -40,17 +40,12 @@ namespace Text2Tree
         TTPattern patternBrackets;
 
         TTParser mainParserEntry;
-        TTParser mainParser;
 
-        TTParser syntaxParser;
 
-        public TTAtomList atomList;
-        public TTTreeNode resultTree;
-        public TTErrorLog errorLog;
-
-        public void Initialize()
+        public override void Initialize()
         {
-            errorLog = new TTErrorLog();
+            base.Initialize();
+
 
             charsetAlpha = new TTCharset("alpha");
             charsetAlpha.addRange('a', 'z');
@@ -208,6 +203,9 @@ namespace Text2Tree
             patternOperators.addString(1, 1, ">=");
             patternOperators.addString(1, 1, "%");
             patternOperators.addString(1, 1, "%=");
+            patternOperators.addString(1, 1, ",");
+            patternOperators.addString(1, 1, "?");
+            patternOperators.addString(1, 1, ":");
 
 
             patternPunctuation = new TTPattern("punc");
@@ -228,15 +226,19 @@ namespace Text2Tree
                 paNumber, patternDoublequotedStringLiteral, patternQuotedStringLiteral,
                 patternInlineComment, patternComment, patternBrackets, patternOperators, patternPunctuation);
 
+            //
+            // lexical analysis
+            //
             // main parser definition
-            mainParser = new TTParser();
             mainParser.List(mainParserEntry);
 
+
+            //
+            // semantical analysis
+            //
             TTPattern pat3;
 
-            Dictionary<string, TTPattern> pats = new Dictionary<string, TTPattern>();
-
-            pat3 = getPattern(pats, "binary_asoc_oper");
+            pat3 = getSyntaxPattern("binary_asoc_oper");
             pat3.MatchingMethod = TTPattern.METHOD_FIRST;
             pat3.addAtom(1, 1, "oper", "<<=", "");
             pat3.addAtom(1, 1, "oper", ">>=", "");
@@ -269,8 +271,11 @@ namespace Text2Tree
             pat3.addAtom(1, 1, "oper", "/", "");
             pat3.addAtom(1, 1, "oper", "~", "");
             pat3.addAtom(1, 1, "oper", "%", "");
+            pat3.addAtom(1, 1, "oper", ",", "");
+            pat3.addAtom(1, 1, "oper", "?", "");
+            pat3.addAtom(1, 1, "oper", ":", "");
 
-            pat3 = getPattern(pats, "unary_prefix_oper");
+            pat3 = getSyntaxPattern("unary_prefix_oper");
             pat3.MatchingMethod = TTPattern.METHOD_FIRST;
             pat3.addAtom(1, 1, "oper", "++", "");
             pat3.addAtom(1, 1, "oper", "--", "");
@@ -278,41 +283,41 @@ namespace Text2Tree
             pat3.addAtom(1, 1, "oper", "!", "");
             pat3.addAtom(1, 1, "oper", "~", "");
 
-            pat3 = getPattern(pats, "unary_postfix_oper");
+            pat3 = getSyntaxPattern("unary_postfix_oper");
             pat3.MatchingMethod = TTPattern.METHOD_FIRST;
             pat3.addAtom(1, 1, "oper", "++", "");
             pat3.addAtom(1, 1, "oper", "--", "");
 
-            pat3 = getPattern(pats, "function_call");
+            pat3 = getSyntaxPattern("function_call");
             pat3.OutputIdentity = "func_call";
             pat3.addAtom(1, 1, "brack", "[", null);
             pat3.addAtom(1, 1, "id", null, "object");
             pat3.addAtom(1, 1, "id", null, "method");
-            pat3.addPattern(0, 10000, getPattern(pats, "expression_single"), "arg");
+            pat3.addPattern(0, 10000, getSyntaxPattern("expression_single"), "arg");
             pat3.addAtom(1, 1, "brack", "]", null);
 
-            pat3 = getPattern(pats, "variable_definition_var");
+            pat3 = getSyntaxPattern("variable_definition_var");
             pat3.addAtom(1, 1, "punc", ",", null);
             pat3.addAtom(1, 1, "id", null, "var_name");
 
-            pat3 = getPattern(pats, "variable_definition");
+            pat3 = getSyntaxPattern("variable_definition");
             pat3.OutputIdentity = "var_def";
             pat3.addAtom(1, 1, "id", "VAR", null);
             pat3.addAtom(1, 1, "id", null, "datatype");
             pat3.addAtom(1, 1, "id", null, "var_name");
-            pat3.addPattern(0, 1000, getPattern(pats, "variable_definition_var"), "");
+            pat3.addPattern(0, 1000, getSyntaxPattern("variable_definition_var"), "");
             pat3.addAtom(1, 1, "punc", ";", null);
 
-            pat3 = getPattern(pats, "expression_with_end");
-            pat3.addPattern(1, 1, getPattern(pats, "expression"), "");
+            pat3 = getSyntaxPattern("expression_with_end");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression"), "");
             pat3.addAtom(1, 1, "punc", ";", null);
 
-            pat3 = getPattern(pats, "expression_enveloped");
+            pat3 = getSyntaxPattern("expression_enveloped");
             pat3.addAtom(1, 1, "brack", "(", null);
-            pat3.addPattern(1, 1, getPattern(pats, "expression"), "");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression"), "");
             pat3.addAtom(1, 1, "brack", ")", null);
 
-            pat3 = getPattern(pats, "expression_single");
+            pat3 = getSyntaxPattern("expression_single");
             pat3.MatchingMethod = TTPattern.METHOD_MAX;
             pat3.addAtom(1, 1, "l_string_dq", null, "");
             pat3.addAtom(1, 1, "l_string_sq", null, "");
@@ -320,82 +325,72 @@ namespace Text2Tree
             pat3.addAtom(1, 1, "l_float", null, "");
             pat3.addAtom(1, 1, "l_integer", null, "");
             pat3.addAtom(1, 1, "id", null, "");
-            pat3.addPattern(1, 1, getPattern(pats, "function_call"), "func_call");
-            pat3.addPattern(1, 1, getPattern(pats, "expression_enveloped"), "ENVELOPES");
+            pat3.addPattern(1, 1, getSyntaxPattern("function_call"), "func_call");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression_enveloped"), "ENVELOPES");
 
-            pat3 = getPattern(pats, "expression_binary");
-            pat3.addPattern(1, 1, getPattern(pats, "binary_asoc_oper"), "");
-            pat3.addPattern(1, 1, getPattern(pats, "expression_prepostfixed"), "");
+            pat3 = getSyntaxPattern("expression_binary");
+            pat3.addPattern(1, 1, getSyntaxPattern("binary_asoc_oper"), "");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression_prepostfixed"), "");
 
-            pat3 = getPattern(pats, "expression_unary_pref");
-            pat3.addPattern(1, 1, getPattern(pats, "unary_prefix_oper"), "");
-            pat3.addPattern(1, 1, getPattern(pats, "expression"), "");
+            pat3 = getSyntaxPattern("expression_unary_pref");
+            pat3.addPattern(1, 1, getSyntaxPattern("unary_prefix_oper"), "");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression"), "");
 
-            pat3 = getPattern(pats, "expression_unary_post");
-            pat3.addPattern(1, 1, getPattern(pats, "expression"), "");
-            pat3.addPattern(1, 1, getPattern(pats, "unary_postfix_oper"), "");
+            pat3 = getSyntaxPattern("expression_unary_post");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression"), "");
+            pat3.addPattern(1, 1, getSyntaxPattern("unary_postfix_oper"), "");
 
-            pat3 = getPattern(pats, "expression_prepostfixed");
-            pat3.addPattern(0, 1, getPattern(pats, "unary_prefix_oper"), "prefixoper");
-            pat3.addPattern(1, 1, getPattern(pats, "expression_single"), "expression_single");
-            pat3.addPattern(0, 1, getPattern(pats, "unary_postfix_oper"), "postfixoper");
+            pat3 = getSyntaxPattern("expression_prepostfixed");
+            pat3.addPattern(0, 1, getSyntaxPattern("unary_prefix_oper"), "prefixoper");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression_single"), "expression_single");
+            pat3.addPattern(0, 1, getSyntaxPattern("unary_postfix_oper"), "postfixoper");
 
-            pat3 = getPattern(pats, "expression");
+            pat3 = getSyntaxPattern("expression");
             pat3.OutputIdentity = "expression";
-            pat3.addPattern(1, 1, getPattern(pats, "expression_prepostfixed"), "");
-            pat3.addPattern(0, 1000, getPattern(pats, "expression_binary"), "");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression_prepostfixed"), "");
+            pat3.addPattern(0, 1000, getSyntaxPattern("expression_binary"), "");
 
 
-            pat3 = getPattern(pats, "exec_block");
+            pat3 = getSyntaxPattern("exec_block");
             pat3.addAtom(1, 1, "brack", "{", null);
-            pat3.addPattern(0, 100000, getPattern(pats, "statement"), "");
+            pat3.addPattern(0, 100000, getSyntaxPattern("statement"), "");
             pat3.addAtom(1, 1, "brack", "}", null);
 
-            pat3 = getPattern(pats, "func_definition");
+            pat3 = getSyntaxPattern("func_definition");
             pat3.OutputIdentity = "func_def";
             pat3.addAtom(1, 1, "id", "func", null);
             pat3.addAtom(1, 1, "id", null, "func_name");
-            pat3.addPattern(1, 1, getPattern(pats, "exec_block"), "block");
+            pat3.addPattern(1, 1, getSyntaxPattern("exec_block"), "block");
 
-            pat3 = getPattern(pats, "if_cmd_elsepart");
+            pat3 = getSyntaxPattern("if_cmd_elsepart");
             pat3.addAtom(1, 1, "id", "else", null);
-            pat3.addPattern(1, 1, getPattern(pats, "exec_block"), "false_block");
+            pat3.addPattern(1, 1, getSyntaxPattern("exec_block"), "false_block");
 
 
-            pat3 = getPattern(pats, "if_cmd");
+            pat3 = getSyntaxPattern("if_cmd");
             pat3.OutputIdentity = "cmd.if";
             pat3.addAtom(1, 1, "id", "if", null);
-            pat3.addPattern(1, 1, getPattern(pats, "expression_single"), "condition");
-            pat3.addPattern(1, 1, getPattern(pats, "exec_block"), "true_block");
-            pat3.addPattern(1, 1, getPattern(pats, "if_cmd_elsepart"), "");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression_single"), "condition");
+            pat3.addPattern(1, 1, getSyntaxPattern("exec_block"), "true_block");
+            pat3.addPattern(1, 1, getSyntaxPattern("if_cmd_elsepart"), "");
 
-            pat3 = getPattern(pats, "statement");
+            pat3 = getSyntaxPattern("statement");
             pat3.OutputIdentity = "";
             pat3.MatchingMethod = TTPattern.METHOD_MAX;
             pat3.addAtom(1, 1, "EOF", "EOF", null);
-            pat3.addPattern(1, 1, getPattern(pats, "variable_definition"), "var_def");
-            pat3.addPattern(1, 1, getPattern(pats, "expression_with_end"), "expression_statement");
-            pat3.addPattern(1, 1, getPattern(pats, "func_definition"), "func_def");
-            pat3.addPattern(1, 1, getPattern(pats, "if_cmd"), "cmd.if");
+            pat3.addPattern(1, 1, getSyntaxPattern("variable_definition"), "var_def");
+            pat3.addPattern(1, 1, getSyntaxPattern("expression_with_end"), "expression_statement");
+            pat3.addPattern(1, 1, getSyntaxPattern("func_definition"), "func_def");
+            pat3.addPattern(1, 1, getSyntaxPattern("if_cmd"), "cmd.if");
 
             TTParser syntaxItem = new TTParser();
-            syntaxItem.First(new TTParserAtom("EOF", "EOF"), getPattern(pats, "statement"));
+            syntaxItem.First(new TTParserAtom("EOF", "EOF"), getSyntaxPattern("statement"));
 
-            syntaxParser = new TTParser();
             syntaxParser.List(syntaxItem);
 
         }
 
-        public TTPattern getPattern(Dictionary<string, TTPattern> pats, string name)
-        {
-            if (pats.ContainsKey(name))
-                return pats[name];
-            TTPattern pt = new TTPattern(name);
-            pats.Add(name, pt);
-            return pt;
-        }
-
-        public bool Run(TTInputTextFile ip)
+        public override bool Run(TTInputTextFile ip)
         {
             bool result = false;
             atomList = new TTAtomList();
@@ -407,13 +402,7 @@ namespace Text2Tree
                 TTErrorLog.Shared.enterDir("syntax", new TextPosition());
                 result = mainParser.ParseAtomList(ip, atomList);
                 TTErrorLog.Shared.goUp();
-                if (atomList.last != null)
-                {
-                    TTAtom eof = new TTAtom("EOF", "EOF");
-                    eof.startPos.position = atomList.last.endPos.position + 1;
-                    eof.endPos.position = eof.startPos.position + 1;
-                    atomList.addItem(eof);
-                }
+                addLastAtom("EOF", "EOF");
 
                 if (result)
                 {
@@ -435,6 +424,7 @@ namespace Text2Tree
 
             return result;
         }
+
 
     }
 }

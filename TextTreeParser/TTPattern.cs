@@ -185,7 +185,7 @@ namespace TextTreeParser
 
             if (b != null)
             {
-                RationalizeWhenExpression(b);
+                //RationalizeWhenExpression(b);
             }
 
             return b;
@@ -197,6 +197,23 @@ namespace TextTreeParser
 
             if (node.Name.Equals("expression"))
             {
+                // level 15
+                if (!b) b = TryBinaryDivide(node, null, "oper", ",", "oper.comma");
+                // level 14
+                if (!b) b = TryBinaryDivide(node, null, "oper", "=", "oper.assign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "&=", "oper.bandassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "|=", "oper.borassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "+=", "oper.plusassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "-=", "oper.minusassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "*=", "oper.multassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "/=", "oper.divassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "~=", "oper.xorassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "%=", "oper.modassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "<<=", "oper.lshiftassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", ">>=", "oper.rshiftassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "&&=", "oper.landassign");
+                if (!b) b = TryBinaryDivide(node, null, "oper", "||=", "oper.lorassign");
+                // level 13
                 if (!b) b = TryBinaryDivide(node, null, "oper", "<", "oper.lt");
                 if (!b) b = TryBinaryDivide(node, null, "oper", "&", "oper.band");
                 if (!b) b = TryBinaryDivide(node, null, "oper", "|", "oper.bor");
@@ -215,19 +232,6 @@ namespace TextTreeParser
                 if (!b) b = TryBinaryDivide(node, null, "oper", ">=", "oper.ge");
                 if (!b) b = TryBinaryDivide(node, null, "oper", "!=", "oper.neq");
                 if (!b) b = TryBinaryDivide(node, null, "oper", "==", "oper.eq");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "=", "oper.assign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "&=", "oper.bandassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "|=", "oper.borassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "+=", "oper.plusassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "-=", "oper.minusassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "*=", "oper.multassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "/=", "oper.divassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "~=", "oper.xorassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "%=", "oper.modassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "<<=", "oper.lshiftassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", ">>=", "oper.rshiftassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "&&=", "oper.landassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "||=", "oper.lorassign");
                 /*if (!b) b = TryUnaryPrefix(node, null, "oper", "++", "unary.inc.prefix", "expression");
                 if (!b) b = TryUnaryPostfix(node, null, "oper", "++", "unary.inc.postfix", "expression");
                 */

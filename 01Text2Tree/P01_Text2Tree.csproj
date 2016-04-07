@@ -86,6 +86,10 @@
       <Project>{C412D39F-C4E8-4B13-8606-2F8A5AD006D7}</Project>
       <Name>TextTreeParser</Name>
     </ProjectReference>
+    <ProjectReference Include="..\TrepInterpreter\TrepInterpreter.csproj">
+      <Project>{C9930377-600F-4391-8CCC-DA0A517448F6}</Project>
+      <Name>TrepInterpreter</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

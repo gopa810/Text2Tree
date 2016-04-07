@@ -2,18 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using TrepInterpreter;
 
 namespace TextTreeParser
 {
     /// <summary>
     /// Defines mutable charset with possibility to add characters into definition of charset.
     /// </summary>
-    public class TTCharset
+    public class TTCharset: TTNamedObject
     {
         public static int PAGE_SIZE = 128;
 
-        public string Name = string.Empty;
         private Dictionary<int, bool[]> pages = new Dictionary<int,bool[]>();
         private int lastPageId = -1;
         private bool[] lastPage = null;
@@ -39,6 +38,58 @@ namespace TextTreeParser
         public TTCharset(bool bInverse)
         {
             Inverted = bInverse;
+        }
+
+        public override SValue CreateInstance(List<SValue> args)
+        {
+            if (args.Count >= 1)
+            {
+                return new TTCharset(args[0].getStringValue());
+            }
+            else
+            {
+                return new TTCharset();
+            }
+        }
+
+        public override SValue ExecuteMethod(Scripting parent, ScriptingSpace space, string method, SVList args)
+        {
+            if (method.Equals("isInverted"))
+            {
+                return new SVBoolean(Inverted);
+            }
+            else if (method.Equals("setInverted"))
+            {
+                if (args.list.Count >= 1)
+                {
+                    Inverted = args.list[0].getBoolValue();
+                }
+                else
+                {
+                    Inverted = false;
+                }
+            }
+            else if (method.Equals("addChar"))
+            {
+                foreach (SValue sv in args.list)
+                {
+                    addChars(sv.getStringValue());
+                }
+                return space.nullValue;
+            }
+            else if (method.Equals("addRange"))
+            {
+                args.AssertCount(2);
+                addRange(args.list[0].getCharValue(), args.list[1].getCharValue());
+                return space.nullValue;
+            }
+            else if (method.Equals("containsChar"))
+            {
+                args.AssertCount(1);
+                return new SVBoolean(ContainsChar(args.list[0].getCharValue()));
+            }
+
+            return base.ExecuteMethod(parent, space, method, args);
         }
 
         private bool[] getPage(int page)

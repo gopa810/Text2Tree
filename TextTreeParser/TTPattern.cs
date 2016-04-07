@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using TrepInterpreter;
 
 namespace TextTreeParser
 {
-    public class TTPattern
+    public class TTPattern: TTNamedObject
     {
         protected class TTPatternEntry
         {
@@ -27,12 +28,18 @@ namespace TextTreeParser
             /// then we will use returned node itself
             /// 
             /// </summary>
-            public string OutputIdentity = "";
+            public string OutputIdentity
+            {
+                get
+                {
+                    return EntryObject.Name;
+                }
+            }
 
             /// <summary>
             /// This may be char, TTCharset or TTPattern
             /// </summary>
-            public object EntryObject = null;
+            public TTNamedObject EntryObject = null;
 
             public override string ToString()
             {
@@ -40,14 +47,16 @@ namespace TextTreeParser
             }
         }
 
-        public string Name = string.Empty;
-        public string OutputIdentity = string.Empty;
+        //public string OutputIdentity = string.Empty;
         protected List<TTPatternEntry> Lines = new List<TTPatternEntry>();
         public int matchingMethod = METHOD_ALL_SERIAL;
+        public bool matchingNameTake = false;
 
         public const int METHOD_ALL_SERIAL = 0;
         public const int METHOD_FIRST = 1;
         public const int METHOD_MAX = 2;
+        public const int METHOD_LIST = 3;
+
 
         public TTPattern()
         {
@@ -58,10 +67,130 @@ namespace TextTreeParser
             Name = str;
         }
 
+        public override SValue CreateInstance(List<SValue> args)
+        {
+            if (args.Count >= 1)
+            {
+                return new TTPattern(args[0].getStringValue());
+            }
+            else
+            {
+                return new TTPattern();
+            }
+        }
+
+        public override SValue ExecuteMethod(Scripting parent, ScriptingSpace space, string method, SVList args)
+        {
+            if (method.Equals("matchingMethod"))
+            {
+                return new SVInt32(matchingMethod);
+            }
+            else if (method.Equals("setMatchingMethod"))
+            {
+                args.AssertCount(1);
+                matchingMethod = args.list[0].getIntValue();
+                return space.nullValue;
+            }
+            else if (method.Equals("matchingMethodString"))
+            {
+                return new SVString(MethodString);
+            }
+            else if (method.Equals("name"))
+            {
+                return new SVString(Name);
+            }
+            else if (method.Equals("setName"))
+            {
+                args.AssertCount(1);
+                Name = args.list[0].getStringValue();
+                return space.nullValue;
+            }
+            else if (method.Equals("addString"))
+            {
+                args.AssertCount(3);
+                addString(args.getIntValue(0), args.getIntValue(1), args.getStringValue(2));
+                return space.nullValue;
+            }
+            else if (method.Equals("addChar"))
+            {
+                args.AssertCount(3);
+                addChar(args.getIntValue(0), args.getIntValue(1), args.getCharValue(2));
+                return space.nullValue;
+            }
+            else if (method.Equals("addChars"))
+            {
+                args.AssertCount(3);
+                addChars(args.getIntValue(0), args.getIntValue(1), args.getStringValue(2));
+                return space.nullValue;
+            }
+            else if (method.Equals("addCharset"))
+            {
+                args.AssertCount(3);
+                args.AssertIsType(2, typeof(TTCharset));
+                addCharset(args.getIntValue(0), args.getIntValue(1), args.list[2] as TTCharset);
+                return space.nullValue;
+            }
+            else if (method.Equals("addPattern"))
+            {
+                args.AssertCount(3);
+                args.AssertIsType(2, typeof(TTCharset));
+                addPattern(args.getIntValue(0), args.getIntValue(1), args.list[2] as TTPattern);
+                return space.nullValue;
+            }
+            else if (method.Equals("addAtom"))
+            {
+                args.AssertCount(5);
+                addAtom(args.getIntValue(0), args.getIntValue(1), 
+                    args.getStringValue(2), args.getStringValue(3), 
+                    args.getStringValue(4));
+                return space.nullValue;
+            }
+            else if (method.Equals("parseTextToAtomList"))
+            {
+                args.AssertCount(1);
+                args.AssertIsType(0, typeof(TTInputTextFile));
+                return ParseTextToAtomList(args.list[0] as TTInputTextFile);
+            }
+            else if (method.Equals("parseTextToAtom"))
+            {
+                args.AssertCount(1);
+                args.AssertIsType(0, typeof(TTInputTextFile));
+                return ParseTextToAtom(args.list[0] as TTInputTextFile);
+            }
+            else if (method.Equals("parseAtomListToTree"))
+            {
+                args.AssertCount(1);
+                args.AssertIsType(0, typeof(TTAtomList));
+                return ParseAtomListToTree(args.list[0] as TTAtomList);
+            }
+
+            return base.ExecuteMethod(parent, space, method, args);
+        }
+
         public bool IsParallel
         {
             get { return matchingMethod == METHOD_MAX; }
             set { matchingMethod = (value ? METHOD_MAX : METHOD_ALL_SERIAL); }
+        }
+
+        public string MethodString
+        {
+            get
+            {
+                switch (matchingMethod)
+                {
+                    case METHOD_ALL_SERIAL:
+                        return "SERIAL";
+                    case METHOD_FIRST:
+                        return "FIRST";
+                    case METHOD_LIST:
+                        return "LIST";
+                    case METHOD_MAX:
+                        return "MAX";
+                }
+
+                return "UNKNOWN";
+            }
         }
 
         public int MatchingMethod
@@ -72,20 +201,26 @@ namespace TextTreeParser
 
         public void addString(int min, int max, string str)
         {
+            TTNamedString ns = new TTNamedString();
+            ns.Value = str;
+
             TTPatternEntry pe = new TTPatternEntry();
             pe.Min = min;
             pe.Max = max;
-            pe.EntryObject = str;
+            pe.EntryObject = ns;
 
             Lines.Add(pe);
         }
 
         public void addChar(int min, int max, char c)
         {
+            TTNamedChar nc = new TTNamedChar();
+            nc.Value = c;
+
             TTPatternEntry pe = new TTPatternEntry();
             pe.Min = min;
             pe.Max = max;
-            pe.EntryObject = c;
+            pe.EntryObject = nc;
 
             Lines.Add(pe);
         }
@@ -107,18 +242,50 @@ namespace TextTreeParser
             Lines.Add(pe);
         }
 
-        public void addPattern(int min, int max, TTPattern pat, string itemName)
+        public void addPattern(int min, int max, TTPattern pat)
         {
             TTPatternEntry pe = new TTPatternEntry();
             pe.Min = min;
             pe.Max = max;
             pe.EntryObject = pat;
-            pe.OutputIdentity = itemName;
+            //pe.OutputIdentity = pat.Name;
             Lines.Add(pe);
         }
 
+        public void addAtom(int min, int max, string t, string v, string itemName)
+        {
+            TTPatternEntry pe = new TTPatternEntry();
+            pe.Min = min;
+            pe.Max = max;
+            TTParserAtom pa = new TTParserAtom();
+            pa.TestType = t;
+            pa.TestValue = v;
+            pa.Name = itemName;
+            pe.EntryObject = pa;
+            Lines.Add(pe);
+        }
 
-        public TTAtom ParseText(TTInputTextFile input)
+        public TTAtomList ParseTextToAtomList(TTInputTextFile input)
+        {
+            TTAtomList atomList = new TTAtomList();
+
+            TTAtom ta = null;
+            do
+            {
+                TTErrorLog.Shared.enterDir("try", input.next);
+                ta = ParseTextToAtom(input);
+                if (ta != null)
+                {
+                    atomList.addItem(ta);
+                }
+                TTErrorLog.Shared.goUp();
+            }
+            while (ta != null);
+
+            return atomList;
+        }
+
+        public TTAtom ParseTextToAtom(TTInputTextFile input)
         {
             TextPosition orig = input.next;
             bool b;
@@ -157,27 +324,32 @@ namespace TextTreeParser
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public TTTreeNode ParseAtoms(TTAtomList input)
+        public TTNode ParseAtomListToTree(TTAtomList input)
         {
             TTAtom orig = input.current;
-            TTTreeNode b = null;
+            TTNode b = null;
 
             switch (matchingMethod)
             {
                 case METHOD_ALL_SERIAL:
-                    TTErrorLog.Shared.enterDir("#serial", orig.startPos);
+//                    TTErrorLog.Shared.enterDir("#serial", orig.startPos);
                     b = ParseAtomsAllSerial(input, orig);
-                    TTErrorLog.Shared.goUp();
+//                    TTErrorLog.Shared.goUp();
                     break;
                 case METHOD_FIRST:
-                    TTErrorLog.Shared.enterDir("#first", orig.startPos);
+//                    TTErrorLog.Shared.enterDir("#first", orig.startPos);
                     b = ParseAtomsFirst(input, orig);
-                    TTErrorLog.Shared.goUp();
+//                    TTErrorLog.Shared.goUp();
                     break;
                 case METHOD_MAX:
-                    TTErrorLog.Shared.enterDir("#paralell", orig.startPos);
+//                    TTErrorLog.Shared.enterDir("#paralell", orig.startPos);
                     b = ParseAtomsMax(input, orig);
-                    TTErrorLog.Shared.goUp();
+//                    TTErrorLog.Shared.goUp();
+                    break;
+                case METHOD_LIST:
+//                    TTErrorLog.Shared.enterDir("#list", orig.startPos);
+                    b = ParseAtomsList(input, orig);
+//                    TTErrorLog.Shared.goUp();
                     break;
                 default:
                     break;
@@ -185,60 +357,60 @@ namespace TextTreeParser
 
             if (b != null)
             {
-                //RationalizeWhenExpression(b);
+                RationalizeWhenExpression(b);
             }
 
             return b;
         }
 
-        public bool RationalizeWhenExpression(TTTreeNode node)
+        public bool RationalizeWhenExpression(TTNode node)
         {
             bool b = false;
 
             if (node.Name.Equals("expression"))
             {
                 // level 15
-                if (!b) b = TryBinaryDivide(node, null, "oper", ",", "oper.comma");
+                if (!b) b = TryBinaryDivide(node, "oper", ",", "oper.comma");
                 // level 14
-                if (!b) b = TryBinaryDivide(node, null, "oper", "=", "oper.assign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "&=", "oper.bandassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "|=", "oper.borassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "+=", "oper.plusassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "-=", "oper.minusassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "*=", "oper.multassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "/=", "oper.divassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "~=", "oper.xorassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "%=", "oper.modassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "<<=", "oper.lshiftassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", ">>=", "oper.rshiftassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "&&=", "oper.landassign");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "||=", "oper.lorassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "=", "oper.assign");
+                if (!b) b = TryBinaryDivide(node, "oper", "&=", "oper.bandassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "|=", "oper.borassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "+=", "oper.plusassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "-=", "oper.minusassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "*=", "oper.multassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "/=", "oper.divassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "~=", "oper.xorassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "%=", "oper.modassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "<<=", "oper.lshiftassign");
+                if (!b) b = TryBinaryDivide(node, "oper", ">>=", "oper.rshiftassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "&&=", "oper.landassign");
+                if (!b) b = TryBinaryDivide(node, "oper", "||=", "oper.lorassign");
                 // level 13
-                if (!b) b = TryBinaryDivide(node, null, "oper", "<", "oper.lt");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "&", "oper.band");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "|", "oper.bor");
-                if (!b) b = TryBinaryDivide(node, null, "oper", ">", "oper.gt");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "+", "oper.plus");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "-", "oper.minus");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "*", "oper.mult");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "/", "oper.div");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "~", "oper.xor");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "%", "oper.mod");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "<<", "oper.lshift");
-                if (!b) b = TryBinaryDivide(node, null, "oper", ">>", "oper.rshift");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "&&", "oper.land");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "||", "oper.lor");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "<=", "oper.le");
-                if (!b) b = TryBinaryDivide(node, null, "oper", ">=", "oper.ge");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "!=", "oper.neq");
-                if (!b) b = TryBinaryDivide(node, null, "oper", "==", "oper.eq");
+                if (!b) b = TryBinaryDivide(node, "oper", "<", "oper.lt");
+                if (!b) b = TryBinaryDivide(node, "oper", "&", "oper.band");
+                if (!b) b = TryBinaryDivide(node, "oper", "|", "oper.bor");
+                if (!b) b = TryBinaryDivide(node, "oper", ">", "oper.gt");
+                if (!b) b = TryBinaryDivide(node, "oper", "+", "oper.plus");
+                if (!b) b = TryBinaryDivide(node, "oper", "-", "oper.minus");
+                if (!b) b = TryBinaryDivide(node, "oper", "*", "oper.mult");
+                if (!b) b = TryBinaryDivide(node, "oper", "/", "oper.div");
+                if (!b) b = TryBinaryDivide(node, "oper", "~", "oper.xor");
+                if (!b) b = TryBinaryDivide(node, "oper", "%", "oper.mod");
+                if (!b) b = TryBinaryDivide(node, "oper", "<<", "oper.lshift");
+                if (!b) b = TryBinaryDivide(node, "oper", ">>", "oper.rshift");
+                if (!b) b = TryBinaryDivide(node, "oper", "&&", "oper.land");
+                if (!b) b = TryBinaryDivide(node, "oper", "||", "oper.lor");
+                if (!b) b = TryBinaryDivide(node, "oper", "<=", "oper.le");
+                if (!b) b = TryBinaryDivide(node, "oper", ">=", "oper.ge");
+                if (!b) b = TryBinaryDivide(node, "oper", "!=", "oper.neq");
+                if (!b) b = TryBinaryDivide(node, "oper", "==", "oper.eq");
                 /*if (!b) b = TryUnaryPrefix(node, null, "oper", "++", "unary.inc.prefix", "expression");
                 if (!b) b = TryUnaryPostfix(node, null, "oper", "++", "unary.inc.postfix", "expression");
                 */
 
                 if (b)
                 {
-                    foreach (TTTreeNode iter in node.Children)
+                    foreach (TTNode iter in node.Children)
                     {
                         RationalizeWhenExpression(iter);
                     }
@@ -248,15 +420,15 @@ namespace TextTreeParser
             return true;
         }
 
-        public bool TryUnaryPrefix(TTTreeNode node, string nodeName, string atomType, string atomValue, string newNodeName, string newSubnodeName)
+        public bool TryUnaryPrefix(TTNode node, string atomType, string atomValue, string newNodeName, string newSubnodeName)
         {
-            TTTreeNode tn;
+            TTNode tn;
             tn = node.getHead();
             if (tn != null)
             {
-                if (tn.canMatchAtom(nodeName, atomType, atomValue))
+                if (tn.canMatchAtom(atomType, atomValue))
                 {
-                    TTTreeNodeCollection subs = node.takeChildrenAfter(tn);
+                    TTNodeCollection subs = node.takeChildrenAfter(tn);
                     tn.addCollection(subs);
                     tn.Name = newSubnodeName;
                     node.Name = newNodeName;
@@ -267,15 +439,15 @@ namespace TextTreeParser
             return false;
         }
 
-        public bool TryUnaryPostfix(TTTreeNode node, string nodeName, string atomType, string atomValue, string newNodeName, string newSubnodeName)
+        public bool TryUnaryPostfix(TTNode node, string atomType, string atomValue, string newNodeName, string newSubnodeName)
         {
-            TTTreeNode tn;
+            TTNode tn;
             tn = node.getTail();
             if (tn != null)
             {
-                if (tn.canMatchAtom(nodeName, atomType, atomValue))
+                if (tn.canMatchAtom(atomType, atomValue))
                 {
-                    TTTreeNodeCollection subs = node.takeChildrenBefore(tn);
+                    TTNodeCollection subs = node.takeChildrenBefore(tn);
                     tn.addCollection(subs);
                     tn.Name = newSubnodeName;
                     node.Name = newNodeName;
@@ -286,15 +458,15 @@ namespace TextTreeParser
             return false;
         }
 
-        public bool TryBinaryDivide(TTTreeNode node, string nodeName, string atomType, string atomValue, string newNodeName)
+        public bool TryBinaryDivide(TTNode node, string atomType, string atomValue, string newNodeName)
         {
-            TTTreeNode dividerNode;
-            dividerNode = node.findNodeForward(nodeName, atomType, atomValue, null);
+            TTNode dividerNode;
+            dividerNode = node.findNodeForward(atomType, atomValue, null);
             if (dividerNode != null)
             {
-                node.atom = null;
+                //node.atom = null;
 
-                TTTreeNodeCollection a1, a2;
+                TTNodeCollection a1, a2;
 
                 a1 = node.takeChildrenBefore(dividerNode);
                 node.removeHead();
@@ -312,16 +484,17 @@ namespace TextTreeParser
             }
         }
 
-        private TTTreeNode ParseAtomsMax(TTAtomList input, TTAtom orig)
+        private TTNode ParseAtomsMax(TTAtomList input, TTAtom orig)
         {
+            TTNode main = new TTNode(Name);
             TTAtom maxPos = orig;
-            TTTreeNode maxTree = null;
+            TTNode maxTree = null;
             TTPatternEntry maxLine = null;
 
             foreach (TTPatternEntry pe in Lines)
             {
                 input.current = orig;
-                TTTreeNode currTree = ParseLineAtoms(pe, input);
+                TTNode currTree = ParseLineAtoms(pe, input);
                 if (currTree != null)
                 {
                     //if (pe.OutputIdentity != null && pe.OutputIdentity.Length > 0 && (currTree.Name == null || currTree.Name.Length == 0))
@@ -345,27 +518,55 @@ namespace TextTreeParser
             if (maxLine != null && maxPos.startPos.position > orig.startPos.position)
             {
                 input.current = maxPos;
-                return maxTree;
+                main.addSubnode(maxTree);
+                return main;
             }
 
             return null;
         }
 
-        private TTTreeNode ParseAtomsFirst(TTAtomList input, TTAtom orig)
+        private TTNode ParseAtomsFirst(TTAtomList input, TTAtom orig)
         {
+            TTNode main = new TTNode(Name);
+
             foreach (TTPatternEntry pe in Lines)
             {
                 input.current = orig;
-                TTTreeNode tn = ParseLineAtoms(pe, input);
-                if (tn != null && pe.OutputIdentity != null && pe.OutputIdentity.Length > 0 && (tn.Name != null && tn.Name.Length == 0))
-                    tn.Name = pe.OutputIdentity;
+                TTNode tn = ParseLineAtoms(pe, input);
                 if (tn != null)
                 {
-                    return tn;
+                    main.addSubnode(tn);
+                    return main;
                 }
             }
 
             input.current = orig;
+            return null;
+        }
+
+        private TTNode ParseAtomsList(TTAtomList input, TTAtom orig)
+        {
+            if (Lines.Count == 0)
+                return null;
+
+            bool succ = true;
+            TTPatternEntry pe = Lines[2];
+            TTNode main = new TTNode(Name);
+
+            while (succ)
+            {
+                TTNode tn = ParseLineAtoms(pe, input);
+                if (tn == null)
+                {
+                    input.current = orig;
+                    if (main.Children.count() < pe.Min || main.Children.count() > pe.Max)
+                        return null;
+                    return main;
+                }
+                main.addSubnode(tn);
+                orig = input.current;
+            }
+
             return null;
         }
 
@@ -376,6 +577,8 @@ namespace TextTreeParser
                 input.next = orig;
                 if (ParseLineText(pe, input))
                 {
+                    if (matchingNameTake)
+                        Name = pe.OutputIdentity;
                     return true;
                 }
             }
@@ -411,6 +614,10 @@ namespace TextTreeParser
 
             if (maxLine != null && maxPos.position > orig.position)
             {
+                if (matchingNameTake)
+                {
+                    Name = maxLine.OutputIdentity;
+                }
                 input.next = maxPos;
                 return true;
             }
@@ -453,14 +660,13 @@ namespace TextTreeParser
 
         }
 
-        private TTTreeNode ParseAtomsAllSerial(TTAtomList input, TTAtom orig)
+        private TTNode ParseAtomsAllSerial(TTAtomList input, TTAtom orig)
         {
             TTAtom linePos;
             int index = 0;
             int maxIndex = Lines.Count - 1;
 
-            TTTreeNode rv = new TTTreeNode();
-            rv.Name = this.OutputIdentity;
+            TTNode rv = new TTNode(Name);
 
             foreach (TTPatternEntry pe in Lines)
             {
@@ -468,23 +674,15 @@ namespace TextTreeParser
                 while (pe.Current < pe.Max)
                 {
                     linePos = input.current;
-                    TTTreeNode lv = ParseLineAtoms(pe, input);
+                    if (linePos == null)
+                        break;
+
+                    TTNode lv = ParseLineAtoms(pe, input);
                     if (lv != null)
                     {
-                        if (pe.OutputIdentity != null && pe.OutputIdentity.Length > 0 && lv.Name.Length == 0)
-                            lv.Name = pe.OutputIdentity;
-                        if (lv.Name == null)
-                        {
-                        }
-                        else if (lv.Name.Length == 0 && lv.atom == null)
-                        {
-                            rv.addCollection(lv.Children);
-                        }
-                        else
-                        {
-                            rv.addSubnode(lv);
-                        }
+                        rv.addSubnode(lv);
                         pe.Current++;
+                        //Debugger.Log(0, "", "Current is " + pe.Current + "\n");
                     }
                     else
                     {
@@ -530,22 +728,22 @@ namespace TextTreeParser
 
         private bool ParseLineText(TTPatternEntry pe, TTInputTextFile input)
         {
-            if (pe.EntryObject is char)
+            if (pe.EntryObject is TTNamedChar)
             {
                 CharEntry ce = input.getChar();
                 if (ce.eof)
                     return false;
-                char c = (char)pe.EntryObject;
-                bool b = (c == ce.c);
+                TTNamedChar c = (TTNamedChar)pe.EntryObject;
+                bool b = (c.Value == ce.c);
                 TTErrorLog.Shared.addDir("char " + c, b, ce.pos);
                 return b;
             }
-            else if (pe.EntryObject is string)
+            else if (pe.EntryObject is TTNamedString)
             {
                 int i = 0;
-                string s = pe.EntryObject as string;
+                TTNamedString s = pe.EntryObject as TTNamedString;
                 CharEntry ce;
-                while (i < s.Length)
+                while (i < s.Value.Length)
                 {
                     ce = input.getChar();
                     if (ce.eof)
@@ -553,7 +751,7 @@ namespace TextTreeParser
                         TTErrorLog.Shared.addDir("string " + s, false, ce.pos);
                         return false;
                     }
-                    if (ce.c != s[i])
+                    if (ce.c != s.Value[i])
                     {
                         TTErrorLog.Shared.addDir("string " + s, false, ce.pos);
                         return false;
@@ -582,8 +780,8 @@ namespace TextTreeParser
             else if (pe.EntryObject is TTPattern)
             {
                 TTPattern pat = pe.EntryObject as TTPattern;
-                TTErrorLog.Shared.enterDir("pattern " + pat.Name, input.next);
-                TTAtom tn = pat.ParseText(input);
+                TTErrorLog.Shared.enterDir("pattern " + pat.Name + " (" + pat.MethodString + ")", input.next);
+                TTAtom tn = pat.ParseTextToAtom(input);
                 TTErrorLog.Shared.goUp();
                 return (tn != null);
             }
@@ -602,7 +800,7 @@ namespace TextTreeParser
         /// If parser object is pattern, then item parsed by pattern are child items of returned tree node
         /// Returned tree node has name given by value of ItemName of pattern line entry.
         /// </returns>
-        private TTTreeNode ParseLineAtoms(TTPatternEntry pe, TTAtomList input)
+        private TTNode ParseLineAtoms(TTPatternEntry pe, TTAtomList input)
         {
             if (pe.EntryObject is TTParserAtom)
             {
@@ -610,35 +808,38 @@ namespace TextTreeParser
                 if (ce == null)
                     return null;
                 TTParserAtom c = (TTParserAtom)pe.EntryObject;
+                string message = string.Format("atom {0} <=> {1}", c, ce);
                 if (c.Match(ce))
                 {
-                    TTErrorLog.Shared.addDir("atom " + c.ToString(), true, ce.startPos);
-                    TTTreeNode rv = new TTTreeNode();
-                    rv.Name = c.OutputIdentity;
+                    TTErrorLog.Shared.addDir(message, true, ce.startPos);
+                    TTNode rv = new TTNode();
+                    rv.Name = c.Name;
                     if (pe.OutputIdentity == null)
                     {
                         rv.Name = null;
                     }
-                    rv.atom = ce;
+                    rv.Value = ce.Value;
                     return rv;
                 }
                 else
                 {
-                    TTErrorLog.Shared.addDir("atom " + c.ToString(), false, ce.startPos);
+                    TTErrorLog.Shared.addDir(message, false, ce.startPos);
                     return null;
                 }
             }
             else if (pe.EntryObject is TTPattern)
             {
                 TTPattern pat = pe.EntryObject as TTPattern;
-                TTErrorLog.Shared.enterDir("pattern " + pat.Name, input.current.startPos);
-                TTTreeNode rv = pat.ParseAtoms(input);
-                if (rv != null && (rv.Name != null && rv.Name.Length == 0)
-                    && pat.OutputIdentity != null && pat.OutputIdentity.Length > 0)
-                {
+                TTErrorLog.Shared.enterDir("pattern " + pat.Name + " (" + pat.MethodString + ")", (input.current != null ? input.current.startPos : new TextPosition()));
+                TTNode rv = pat.ParseAtomListToTree(input);
+                if (rv != null)
+                    rv.Name = pat.Name;
+                //if (rv != null && (rv.Name != null && rv.Name.Length == 0)
+                //    && pat.OutputIdentity != null && pat.OutputIdentity.Length > 0)
+                //{
 
-                    rv.Name = pat.OutputIdentity;
-                }
+                //    rv.Name = pat.OutputIdentity;
+                //}
                 TTErrorLog.Shared.goUp();
                 return rv;
             }
@@ -647,20 +848,5 @@ namespace TextTreeParser
             return null;
         }
 
-
-
-        public void addAtom(int min, int max, string t, string v, string itemName)
-        {
-            TTPatternEntry pe = new TTPatternEntry();
-            pe.Min = min;
-            pe.Max = max;
-            TTParserAtom pa = new TTParserAtom();
-            pa.TestType = t;
-            pa.TestValue = v;
-            pa.OutputIdentity = itemName;
-            pe.EntryObject = pa;
-            pe.OutputIdentity = itemName;
-            Lines.Add(pe);
-        }
     }
 }

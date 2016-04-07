@@ -1,0 +1,11 @@
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\bin\Debug\COBOLparser.exe
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\bin\Debug\COBOLparser.pdb
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\obj\x86\Debug\COBOLparser.FormResults.resources
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\obj\x86\Debug\COBOLparser.FormSingleCobol.resources
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\obj\x86\Debug\COBOLparser.MainForm.resources
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\obj\x86\Debug\COBOLparser.Properties.Resources.resources
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\obj\x86\Debug\COBOLparser.csproj.GenerateResource.Cache
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\obj\x86\Debug\COBOLparser.exe
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\obj\x86\Debug\COBOLparser.pdb
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\obj\x86\Debug\COBOLparser.csprojResolveAssemblyReference.cache
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\COBOLparser\obj\x86\Debug\COBOLparser.FormDataTables.resources

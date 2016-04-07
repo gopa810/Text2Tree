@@ -44,15 +44,27 @@
     <Compile Include="TTAtom.cs" />
     <Compile Include="TTAtomList.cs" />
     <Compile Include="TTCharset.cs" />
+    <Compile Include="TTDelegate.cs" />
     <Compile Include="TTErrorLog.cs" />
     <Compile Include="TTInputTextFile.cs" />
-    <Compile Include="TTParser.cs" />
+    <Compile Include="TTNamedChar.cs" />
+    <Compile Include="TTNamedObject.cs" />
+    <Compile Include="TTNamedString.cs" />
+    <Compile Include="TTParserAtom.cs" />
     <Compile Include="TTPattern.cs" />
-    <Compile Include="TTTreeNode.cs" />
-    <Compile Include="TTTreeNodeCollection.cs" />
+    <Compile Include="TTTreeAdjustmentOperation.cs" />
+    <Compile Include="TTTreeAdjustmentRule.cs" />
+    <Compile Include="TTNode.cs" />
+    <Compile Include="TTNodeCollection.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TrepInterpreter\TrepInterpreter.csproj">
+      <Project>{C9930377-600F-4391-8CCC-DA0A517448F6}</Project>
+      <Name>TrepInterpreter</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

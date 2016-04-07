@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
-using TextTreeParser;
 using System.Windows.Forms;
 using System.IO;
+
+using TextTreeParser;
+using TrepInterpreter;
 
 namespace Text2Tree
 {
@@ -30,7 +32,7 @@ namespace Text2Tree
             Debugger.Log(0, "", "\n");
         }
 
-        public void print(ParserResult pr)
+        /*public void print(ParserResult pr)
         {
             if (pr == null)
             {
@@ -41,7 +43,7 @@ namespace Text2Tree
                 println("Parser:");
                 println("   matchedString: ", pr.matchedString.ToString());
             }
-        }
+        }*/
 
         public void print(TTAtomList pr)
         {
@@ -53,7 +55,7 @@ namespace Text2Tree
             }
         }
 
-        public void print(TTTreeNode pr, int level)
+        public void print(TTNode pr, int level)
         {
             if (pr == null)
             {
@@ -65,18 +67,11 @@ namespace Text2Tree
             {
                 for (int i = 0; i < level; i++)
                     print("  ");
-                if (pr.atom != null)
-                {
-                    println("TreeNode [", pr.atom.Type, "] = ", pr.atom.Value);
-                }
-                else
-                {
-                    println("TreeNode NULL");
-                }
+                println("TreeNode [", pr.Name, "] = ", pr.Value);
             }
         }
 
-        public void print(TTTreeNode pr)
+        public void print(TTNode pr)
         {
             print(pr, 0);
         }
@@ -102,6 +97,7 @@ namespace Text2Tree
 
         public void testParser()
         {
+            /*
             startFuncLog("Parser");
             string file = "abcdef";
             TTInputTextFile ip = new TTInputTextFile();
@@ -126,6 +122,7 @@ namespace Text2Tree
             }
 
             stopFuncLog();
+            */
         }
 
         public void testParser2(string textToParse, TreeView tv, TreeView restv)
@@ -152,16 +149,26 @@ namespace Text2Tree
 
             script.Initialize();
 
-            if (script.Run(ip))
+            script.resultTree = GetNodeB(Scripting.ParseText(textToParse));
+
+            /*try
             {
-                println(" * * * ATOM LIST * * *");
-                print(script.atomList);
-                println(" * * * TREE * * *");
-                print(script.resultTree);
+                if (script.Run(ip))
+                {
+                    println(" * * * ATOM LIST * * *");
+                    print(script.atomList);
+                    println(" * * * TREE * * *");
+                    print(script.resultTree);
+                }
             }
+            catch (Exception ex)
+            {
+                script.errorLog.FinalMessage = ex.Message + "\r\n" + ex.StackTrace + "\r\n\r\n";
+            }
+
             println(" * * * LOG * * *");
             println(script.errorLog.ToString());
-
+            */
             if (tv != null)
             {
                 TTErrorLog.Shared.validateSuccess();
@@ -197,33 +204,70 @@ namespace Text2Tree
             return tn;
         }
 
-        internal TreeNode GetNodeA(TTTreeNode node)
+        internal TreeNode GetNodeA(TTNode node)
         {
             TreeNode tn = new TreeNode();
-            tn.Text= "";
-            if (node.Name == null)
-            {
-                tn.Text = "(NULL)";
-            }
-            else if (node.Name.Length > 0)
-            {
-                tn.Text = node.Name;
-            }
-            if (node.atom != null)
-            {
-                if (tn.Text.Length > 0)
-                    tn.Text += " := ";
-                tn.Text += node.atom.ToString();
-            }
-
+            tn.Text= (node.Name == null ? "(NULL)" : node.Name) + " := " + (node.Value == null ? "(NULL)" : node.Value);
             tn.Tag = node;
-            foreach(TTTreeNode ti in node.Children)
+            foreach(TTNode ti in node.Children)
             {
                 TreeNode tn2 = GetNodeA(ti);
                 tn.Nodes.Add(tn2);
             }
 
             return tn;
+        }
+
+        internal TTNode GetNodeB(SValue sv)
+        {
+            if (sv is SVList)
+            {
+                SVList sl = sv as SVList;
+                TTNode tn = new TTNode("list #" + sl.nodeId);
+                foreach (SValue s1 in sl.list)
+                {
+                    tn.addSubnode(GetNodeB(s1));
+                }
+                return tn;
+            }
+            else if (sv is SVInt32)
+            {
+                SVInt32 si = sv as SVInt32;
+                TTNode tn = new TTNode("int #" + sv.nodeId);
+                tn.Value = si.nValue.ToString();
+                return tn;
+            }
+            else if (sv is SVToken)
+            {
+                SVToken st = sv as SVToken;
+                TTNode tn = new TTNode("token #" + st.nodeId);
+                tn.Value = st.sValue;
+                return tn;
+            }
+            else if (sv is SVString)
+            {
+                SVString ss = sv as SVString;
+                TTNode tn = new TTNode("string #" + ss.nodeId);
+                tn.Value = ss.sValue;
+                return tn;
+            }
+            else if (sv is SVInt64)
+            {
+                SVInt64 sl = sv as SVInt64;
+                TTNode tn = new TTNode("long #" + sl.nodeId);
+                tn.Value = sl.lValue.ToString();
+                return tn;
+            }
+            else if (sv is SVDouble)
+            {
+                SVDouble sd = sv as SVDouble;
+                TTNode tn = new TTNode("double #" + sd.nodeId);
+                tn.Value = sd.dValue.ToString();
+                return tn;
+            }
+
+            // should not happen this
+            return new TTNode("N/A");
         }
 
 

@@ -1,0 +1,13 @@
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\obj\x86\Debug\StreamStateMachineCreator.Form1.resources
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\obj\x86\Debug\StreamStateMachineCreator.Properties.Resources.resources
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\obj\x86\Debug\StreamStateMachineCreator.SMVariableDialog.resources
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\obj\x86\Debug\StreamStateMachineCreator.csproj.GenerateResource.Cache
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\bin\Debug\StreamStateMachineCreator.exe
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\bin\Debug\StreamStateMachineCreator.pdb
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\obj\x86\Debug\StreamStateMachineCreator.exe
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\obj\x86\Debug\StreamStateMachineCreator.pdb
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\obj\x86\Debug\StreamStateMachineCreator.SMStatePropertiesDialog.resources
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\obj\x86\Debug\StreamStateMachineCreator.SMProcessingDialog.resources
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\bin\Debug\TrepInterpreter.dll
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\bin\Debug\TrepInterpreter.pdb
+C:\Users\peter.kollath\Documents\Gpsl\StreamStateMachineCreator\StreamStateMachineCreator\obj\x86\Debug\StreamStateMachineCreator.csprojResolveAssemblyReference.cache

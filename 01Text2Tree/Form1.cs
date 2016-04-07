@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using TextTreeParser;
+using TI = TrepInterpreter;
 
 namespace Text2Tree
 {
@@ -16,18 +17,18 @@ namespace Text2Tree
         {
             InitializeComponent();
 
-            inputTextBox.Text = "            VAR CHARSET newline; \r\n" +
-            "VAR PATTERN pat2; \r\n" +
+            inputTextBox.Text = "           (set newline ( new CHARSET 'newline')) \r\n" +
+            "(set pat2 (new PATTERN pat2)) \r\n" +
             "    \r\n" +
-            "[pat2 SETMETHOD FIRST]; \r\n" +
-            "[pat3 ADDSTRING 1 1 'func']; \r\n" +
-            "[pat4 REMOVE [pat2 HEAD 2]]; \r\n" +
-            "func main { \r\n" +
-            "   if (a) { then; } else {345;} \r\n" + 
-            "   [patMain exec]; \r\n" +
-            "   [pat2 reset];\r\n" +
-            "   a = (w + 3) - 2;" + 
-            "} \r\n";
+            "(pat2 SETMETHOD FIRST) \r\n" +
+            "(pat3 ADDSTRING 1 1 'func') \r\n" +
+            "(pat4 REMOVE (pat2 HEAD 2)) \r\n" +
+            "(defun main () ( \r\n" +
+            "   (if (a) () (run abc 1)) \r\n" + 
+            "   (patMain exec) \r\n" +
+            "   (pat2 reset)\r\n" +
+            "   (set a (- (+ w 3) 2))" + 
+            ") \r\n";
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -86,6 +87,29 @@ namespace Text2Tree
             treeView2.BeginUpdate();
             treeView2.ExpandAll();
             treeView2.EndUpdate();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            //TLanguageGScript script = new TLanguageGScript();
+            TLanguageCPP script = new TLanguageCPP();
+
+            script.Initialize();
+
+            TI.Scripting scr = new TI.Scripting();
+            TTDelegate td = new TTDelegate();
+
+            try
+            {
+                scr.Execute(inputTextBox.Text, td);
+                richTextBox3.Text = scr.logtext.ToString();
+            }
+            catch (Exception ex)
+            {
+                richTextBox3.Text = scr.logtext.ToString() + "\n\n" + ex.Message + "\n\n" + ex.StackTrace;
+            }
+
+
         }
     }
 }

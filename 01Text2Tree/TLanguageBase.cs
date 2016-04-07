@@ -9,22 +9,22 @@ namespace Text2Tree
     public class TLanguageBase
     {
         public TTAtomList atomList;
-        public TTTreeNode resultTree;
+        public TTNode resultTree;
         public TTErrorLog errorLog;
         public Dictionary<string, TTCharset> charsets = new Dictionary<string, TTCharset>();
         public Dictionary<string, TTPattern> lexicalPatterns = new Dictionary<string, TTPattern>();
         public Dictionary<string, TTPattern> syntaxPatterns = new Dictionary<string, TTPattern>();
-        public TTParser mainParser;
-        public TTParser syntaxParser;
+        public TTPattern mainParser;
+        public TTPattern syntaxParser;
 
 
         public virtual void Initialize()
         {
             errorLog = new TTErrorLog();
-            mainParser = new TTParser();
-            syntaxParser = new TTParser();
+            mainParser = new TTPattern();
+            syntaxParser = new TTPattern();
             atomList = new TTAtomList();
-            resultTree = new TTTreeNode();
+            resultTree = new TTNode();
         }
 
         public virtual bool Run(TTInputTextFile ip)

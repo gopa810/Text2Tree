@@ -1,0 +1,9 @@
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\CobolToCsharp\bin\Debug\CobolToCsharp.exe
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\CobolToCsharp\bin\Debug\CobolToCsharp.pdb
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\CobolToCsharp\obj\x86\Debug\CobolToCsharp.ConvSettingsView.resources
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\CobolToCsharp\obj\x86\Debug\CobolToCsharp.Form1.resources
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\CobolToCsharp\obj\x86\Debug\CobolToCsharp.Properties.Resources.resources
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\CobolToCsharp\obj\x86\Debug\CobolToCsharp.csproj.GenerateResource.Cache
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\CobolToCsharp\obj\x86\Debug\CobolToCsharp.exe
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\CobolToCsharp\obj\x86\Debug\CobolToCsharp.pdb
+C:\Users\peter.kollath\Documents\Gpsl\COBOLparser\CobolToCsharp\bin\Debug\CobolToCsharp.exe.config

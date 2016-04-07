@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TrepInterpreter;
 
 namespace TextTreeParser
 {
-    public class TTErrorLog
+    public class TTErrorLog: SValue
     {
         public class TreeItem
         {
@@ -67,6 +68,100 @@ namespace TextTreeParser
             Root = new TreeItem();
             Root.Name = "Parser Analysis";
             Current = Root;
+        }
+
+
+        public override SValue CreateInstance(List<SValue> args)
+        {
+            return new TTErrorLog();
+        }
+
+        public override SValue ExecuteMethod(Scripting parent, ScriptingSpace space, string method, SVList args)
+        {
+            if (method.Equals("finalMessage"))
+            {
+                return new SVString(FinalMessage);
+            }
+            else if (method.Equals("setFinalMessage"))
+            {
+                if (args.list.Count == 0)
+                {
+                    FinalMessage = string.Empty;
+                }
+                else
+                {
+                    FinalMessage = args.list[0].getStringValue();
+                }
+            }
+            else if (method.Equals("addLog"))
+            {
+                if (args.list.Count == 0)
+                {
+                    addLog("\n", null);
+                }
+                else if (args.list.Count == 1)
+                {
+                    addLog(args.list[0].getStringValue(), null);
+                }
+                else
+                {
+                    string[] argsa = new string[args.list.Count - 1];
+                    for (int i = 1; i < args.list.Count; i++)
+                    {
+                        argsa[i - 1] = args.list[i].getStringValue();
+                    }
+                    addLog(args.list[0].getStringValue(), argsa);
+                }
+            }
+            else if (method.Equals("enterDir"))
+            {
+                if (args.list.Count == 1)
+                {
+                    enterDir(args.list[0].getStringValue(), new TextPosition());
+                }
+                else if (args.list.Count == 2)
+                {
+                    args.AssertIsType(1, typeof(TTInputTextFile.TextPositionObject));
+                    enterDir(args.list[0].getStringValue(),
+                        (args.list[1] as TTInputTextFile.TextPositionObject).pos);
+                }
+                return space.nullValue;
+            }
+            else if (method.Equals("addDir"))
+            {
+                if (args.list.Count == 1)
+                {
+                    addDir(args.list[0].getStringValue(), true, new TextPosition());
+                }
+                else if (args.list.Count == 2)
+                {
+                    addDir(args.list[0].getStringValue(), args.list[1].getBoolValue(), new TextPosition());
+                }
+                else if (args.list.Count == 3)
+                {
+                    addDir(args.list[0].getStringValue(), 
+                        args.list[1].getBoolValue(), 
+                        (args.list[2] as TTInputTextFile.TextPositionObject).pos);
+                }
+                return space.nullValue;
+            }
+            else if (method.Equals("goUp"))
+            {
+                goUp();
+                return space.nullValue;
+            }
+            else if (method.Equals("validateSuccess"))
+            {
+                validateSuccess();
+                return space.nullValue;
+            }
+            else if (method.Equals("resolveLastError"))
+            {
+                resolveLastError();
+                return space.nullValue;
+            }
+
+            return base.ExecuteMethod(parent, space, method, args);
         }
 
         public override string ToString()

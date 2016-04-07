@@ -1,0 +1,8 @@
+C:\Users\peter.kollath\Documents\Gpsl\RTFChangeToUnicode\RTFChangeToUnicode\bin\Debug\RTFChangeToUnicode.exe
+C:\Users\peter.kollath\Documents\Gpsl\RTFChangeToUnicode\RTFChangeToUnicode\bin\Debug\RTFChangeToUnicode.pdb
+C:\Users\peter.kollath\Documents\Gpsl\RTFChangeToUnicode\RTFChangeToUnicode\obj\x86\Debug\RTFChangeToUnicode.csprojResolveAssemblyReference.cache
+C:\Users\peter.kollath\Documents\Gpsl\RTFChangeToUnicode\RTFChangeToUnicode\obj\x86\Debug\RTFChangeToUnicode.Form1.resources
+C:\Users\peter.kollath\Documents\Gpsl\RTFChangeToUnicode\RTFChangeToUnicode\obj\x86\Debug\RTFChangeToUnicode.Properties.Resources.resources
+C:\Users\peter.kollath\Documents\Gpsl\RTFChangeToUnicode\RTFChangeToUnicode\obj\x86\Debug\RTFChangeToUnicode.csproj.GenerateResource.Cache
+C:\Users\peter.kollath\Documents\Gpsl\RTFChangeToUnicode\RTFChangeToUnicode\obj\x86\Debug\RTFChangeToUnicode.exe
+C:\Users\peter.kollath\Documents\Gpsl\RTFChangeToUnicode\RTFChangeToUnicode\obj\x86\Debug\RTFChangeToUnicode.pdb

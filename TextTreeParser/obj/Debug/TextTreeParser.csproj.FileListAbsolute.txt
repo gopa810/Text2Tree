@@ -3,3 +3,5 @@ C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\bin\Debug\TextT
 C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\obj\Debug\TextTreeParser.dll
 C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\obj\Debug\TextTreeParser.pdb
 C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\obj\Debug\TextTreeParser.csprojResolveAssemblyReference.cache
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\bin\Debug\TrepInterpreter.dll
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TextTreeParser\bin\Debug\TrepInterpreter.pdb

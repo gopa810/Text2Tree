@@ -1,0 +1,4 @@
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TrepInterpreter\bin\Debug\TrepInterpreter.dll
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TrepInterpreter\bin\Debug\TrepInterpreter.pdb
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TrepInterpreter\obj\Debug\TrepInterpreter.dll
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\TrepInterpreter\obj\Debug\TrepInterpreter.pdb

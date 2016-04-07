@@ -2,18 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using TrepInterpreter;
 
 namespace TextTreeParser
 {
-    public class TTAtom
+    public class TTAtom: SValue
     {
         public TTAtom next = null;
 
         public string Type;
         public string Value;
-        private Dictionary<String, String> Attributes;
         public TextPosition startPos;
         public TextPosition endPos;
+
+
 
         public TTAtom()
         {
@@ -23,6 +25,63 @@ namespace TextTreeParser
         {
             Type = t;
             Value = v;
+        }
+
+
+        public override SValue CreateInstance(List<SValue> args)
+        {
+            return new TTAtom();
+        }
+
+        public override SValue ExecuteMethod(Scripting parent, ScriptingSpace space, string method, SVList args)
+        {
+            if (method.Equals("last"))
+            {
+                return last;
+            }
+            else if (method.Equals("type"))
+            {
+                return new SVString(Type);
+            }
+            else if (method.Equals("value"))
+            {
+                return new SVString(Value);
+            }
+            else if (method.Equals("setType"))
+            {
+                args.AssertCount(1);
+                this.Type = args.list[0].getStringValue();
+                return args.list[0];
+            }
+            else if (method.Equals("setValue"))
+            {
+                args.AssertCount(1);
+                this.Value = args.list[0].getStringValue();
+                return args.list[0];
+            }
+            else if (method.Equals("startPos"))
+            {
+                return new TTInputTextFile.TextPositionObject(startPos);
+            }
+            else if (method.Equals("endPos"))
+            {
+                return new TTInputTextFile.TextPositionObject(endPos);
+            }
+            else if (method.Equals("next"))
+            {
+                if (next == null)
+                    return space.nullValue;
+                return next;
+            }
+            else if (method.Equals("setNext"))
+            {
+                args.AssertCount(1);
+                args.AssertIsType(0, typeof(TTAtom));
+                next = args.list[0] as TTAtom;
+                return next;
+            }
+
+            return base.ExecuteMethod(parent, space, method, args);
         }
 
         public TTAtom last
@@ -36,25 +95,6 @@ namespace TextTreeParser
                 }
                 return t;
             }
-        }
-
-        // methods
-        public void SetAttribute(string attrName, string attrVal)
-        {
-            if (Attributes == null)
-                Attributes = new Dictionary<string, string>();
-            if (Attributes.ContainsKey(attrName))
-                Attributes[attrName] = attrVal;
-            Attributes.Add(attrName, attrVal);
-        }
-
-        public string GetAttribute(string attrName)
-        {
-            if (Attributes == null)
-                return "";
-            if (Attributes.ContainsKey(attrName))
-                return Attributes[attrName];
-            return "";
         }
 
         public override string ToString()

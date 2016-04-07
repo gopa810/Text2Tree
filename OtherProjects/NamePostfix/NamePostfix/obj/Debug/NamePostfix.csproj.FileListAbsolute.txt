@@ -1,0 +1,4 @@
+C:\Users\peter.kollath\Documents\Gpsl\NamePostfix\NamePostfix\bin\Debug\NamePostfix.dll
+C:\Users\peter.kollath\Documents\Gpsl\NamePostfix\NamePostfix\bin\Debug\NamePostfix.pdb
+C:\Users\peter.kollath\Documents\Gpsl\NamePostfix\NamePostfix\obj\Debug\NamePostfix.dll
+C:\Users\peter.kollath\Documents\Gpsl\NamePostfix\NamePostfix\obj\Debug\NamePostfix.pdb

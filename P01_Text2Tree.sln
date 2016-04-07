@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "P01_Text2Tree", "01Text2Tre
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextTreeParser", "TextTreeParser\TextTreeParser.csproj", "{C412D39F-C4E8-4B13-8606-2F8A5AD006D7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrepInterpreter", "TrepInterpreter\TrepInterpreter.csproj", "{C9930377-600F-4391-8CCC-DA0A517448F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,16 @@ Global
 		{C412D39F-C4E8-4B13-8606-2F8A5AD006D7}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{C412D39F-C4E8-4B13-8606-2F8A5AD006D7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{C412D39F-C4E8-4B13-8606-2F8A5AD006D7}.Release|x86.ActiveCfg = Release|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{C9930377-600F-4391-8CCC-DA0A517448F6}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

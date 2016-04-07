@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "COBOLparser", "COBOLparser\COBOLparser.csproj", "{FA0D93B7-F6CD-4999-998B-8C260239251D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CobolToCsharp", "CobolToCsharp\CobolToCsharp.csproj", "{517A95A4-DDD4-4B73-A6A0-C90F747D1BE7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FA0D93B7-F6CD-4999-998B-8C260239251D}.Debug|x86.ActiveCfg = Debug|x86
+		{FA0D93B7-F6CD-4999-998B-8C260239251D}.Release|x86.ActiveCfg = Release|x86
+		{FA0D93B7-F6CD-4999-998B-8C260239251D}.Release|x86.Build.0 = Release|x86
+		{517A95A4-DDD4-4B73-A6A0-C90F747D1BE7}.Debug|x86.ActiveCfg = Debug|x86
+		{517A95A4-DDD4-4B73-A6A0-C90F747D1BE7}.Debug|x86.Build.0 = Debug|x86
+		{517A95A4-DDD4-4B73-A6A0-C90F747D1BE7}.Release|x86.ActiveCfg = Release|x86
+		{517A95A4-DDD4-4B73-A6A0-C90F747D1BE7}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

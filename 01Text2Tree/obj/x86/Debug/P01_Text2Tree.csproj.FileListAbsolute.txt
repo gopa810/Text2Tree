@@ -8,3 +8,5 @@ C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\obj\x86\Debug\01Te
 C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\obj\x86\Debug\P01_Text2Tree.csprojResolveAssemblyReference.cache
 C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\bin\Debug\TextTreeParser.dll
 C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\bin\Debug\TextTreeParser.pdb
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\bin\Debug\TrepInterpreter.dll
+C:\Users\peter.kollath\Documents\Gpsl\01Text2Tree\01Text2Tree\bin\Debug\TrepInterpreter.pdb
